@@ -1,6 +1,7 @@
 classdef DigitalOption < pack.options.OptionBase
     methods
-        function p = Payoff(Price)
+        %% Payoff function
+        function p = Payoff(~, Price)
             if Type == OptionType.Call
                 if Strike >= Price
                     p = 1;
@@ -16,6 +17,12 @@ classdef DigitalOption < pack.options.OptionBase
             end
         end
         
+         %% Single option price
+        function v = Value(obj, Spot, Vol, RFR)
+            v = SingleOptionValue(obj, Spot, Vol, RFR);
+        end
+        
+        %% Constructor
         function obj = DigitalOption(Term, Type, Strike)
             obj = obj@pack.options.OptionBase(Term, Type, Strike);
         end
