@@ -1,4 +1,4 @@
-classdef SimpleVol < Volatility
+classdef SimpleVol < pack.volatility.Volatility
     properties(Access=private)
         xVol 
     end

@@ -1,4 +1,4 @@
-classdef UncertainVol < Volatility
+classdef UncertainVol < pack.volatility.Volatility
     properties(Access=private)
         xVolMin
         xVolMax

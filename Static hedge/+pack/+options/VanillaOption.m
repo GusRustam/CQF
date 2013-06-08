@@ -1,4 +1,4 @@
-classdef VanillaOption < Option
+classdef VanillaOption < pack.options.OptionBase
     methods
         function p = Payoff(Price)
             if Type == OptionType.Call
@@ -7,10 +7,9 @@ classdef VanillaOption < Option
                 p = max(Price-Strike, 0);
             end
         end
-        
                 
         function obj = VanillaOption(Term, Type, Strike)
-            obj = obj@Option(Term, Type, Strike);
+            obj = obj@pack.options.OptionBase(Term, Type, Strike);
         end
     end
 end

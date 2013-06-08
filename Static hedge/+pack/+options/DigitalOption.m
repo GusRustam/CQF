@@ -1,4 +1,4 @@
-classdef DigitalOption < Option
+classdef DigitalOption < pack.options.OptionBase
     methods
         function p = Payoff(Price)
             if Type == OptionType.Call
@@ -17,7 +17,7 @@ classdef DigitalOption < Option
         end
         
         function obj = DigitalOption(Term, Type, Strike)
-            obj = obj@Option(Term, Type, Strike);
+            obj = obj@pack.options.OptionBase(Term, Type, Strike);
         end
     end
 end

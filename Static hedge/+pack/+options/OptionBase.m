@@ -1,6 +1,10 @@
-classdef (Abstract) Option
-    %OPTION Simple abstract
+classdef (Abstract) OptionBase
+    %OPTION Simple abstract option
     %   Provides simple option description
+    %   - term (time in years)
+    %   - type (put/call)
+    %   - strike price
+    
     properties
         Term
         Type
@@ -12,12 +16,11 @@ classdef (Abstract) Option
     end
     
     methods
-        function obj = Option(Term, Type, Strike)
+        function obj = OptionBase(Term, Type, Strike)
             obj.Term = Term;
             obj.Type = Type;
             obj.Strike = Strike;
         end
     end
-    
 end
 
