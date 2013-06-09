@@ -14,29 +14,26 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
 %  s - option price surface
 
 %%
-    import pack
-
-    Strike = Option.Strike;
-    Term = Option.Term;
-    Type = Option.Type;
-    N = Size(0);
-    K = Size(1);
+    import pack.*
+    import pack.volatilty.*
     
-    if strcmpi(Type, 'CALL')
-       its_call = 1; 
-    else
-       its_call = -1;
-    end
+    simpleVolClass = ?SimpleVol;
+    uncertainVolClass = ?UncertainVol;
+
+    N = Size(1);
+    K = Size(2);
+    
+    Sigma = Vol.Vol();
 
     %% Grid parameters
-    maxS = 2*Strike;
+    maxS = 2 * Option.Strike;
     dS = maxS / (N - 1);
     
     if Method == FDM.Explicit
         dT = 0.9 / ((max(Sigma)/100)^2) / (N^2);
-        K = ceil(Term / dT);
+        K = ceil(Option.Term / dT);
     end
-    dT = Term / (K-1);
+    dT = Option.Term / (K-1);
 
     S = 0:dS:maxS;    
     j = 0:N-1;
@@ -50,17 +47,16 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
     %   and it will be calculated during iterations
     % Right boundary (T = Term): V(Si, T) = Payoff(Si)
     V(:, K) = Option.Payoff(S);
-
-        
+    
     %% Calculating option value on the grid
-    if strcmpi(VolModel, 'CONST')
+    if isa(Vol, simpleVolClass.Name)
         s = Sigma/100;
         r = RFR/100;
         a = 0.5 * (s*j).^2  * dT;
         b = 0.5 * r * j * dT; 
         c = -r * dT;
 
-        if strcmpi(Scheme, 'Implicit')
+        if Method == FDM.Implicit
             A = -a + b;
             B = 1 + 2*a - c;
             C = -a - b;
@@ -71,7 +67,7 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
         end
 
         Z = diag(C(2:N-2),1) + diag(B(2:N-1)) + diag(A(3:N-1),-1);
-        if strcmpi(Type, 'CALL')
+        if Method == FDM.Implicit
             Z(N-2,N-2) = B(N-1)+2*C(N-1);
             Z(N-2,N-3) = A(N-1)-C(N-1);
         else
@@ -79,7 +75,7 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
             Z(1,2) = C(2)-A(2);
         end
 
-        if strcmpi(Scheme, 'Implicit')
+        if Method == FDM.Implicit
             for k=K:-1:2
                 V(2:N-1, k-1) = Z\V(2:N-1,k);
             end
@@ -89,12 +85,12 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
             end
         end
         
-        if strcmpi(Type, 'CALL')
+        if Option.Type == OptionType.Call
             V(N,:) = 2*V(N-1,:)-V(N-2,:);
         else
             V(1,:) = 2*V(2,:)-V(3,:);
         end
-    elseif strcmpi(VolModel, 'UNCERTAIN')
+    elseif isa(Vol, uncertainVolClass.Name)
         s_min = min(Sigma)/100;
         s_max = max(Sigma)/100;
         r = RFR/100;
@@ -104,7 +100,7 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
         b = 0.5 * r * j * dT; 
         c = -r * dT;
 
-        if strcmpi(Scheme, 'Implicit')
+        if Method == FDM.Implicit
             A_min = -a_min + b;
             B_min = 1 + 2*a_min - c; 
             C_min = -a_min - b;
@@ -124,7 +120,7 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
 
         Z_min = diag(C_min(2:N-2),1) + diag(B_min(2:N-1)) + diag(A_min(3:N-1),-1);
         Z_max = diag(C_max(2:N-2),1) + diag(B_max(2:N-1)) + diag(A_max(3:N-1),-1);
-        if strcmpi(Type, 'CALL')
+        if  Option.Type == OptionType.Call
             Z_min(N-2,N-2) = B_min(N-1)+2*C_min(N-1);
             Z_min(N-2,N-3) = A_min(N-1)-C_min(N-1);
             Z_max(N-2,N-2) = B_max(N-1)+2*C_max(N-1);
@@ -146,7 +142,9 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
             else
                 V(2:N-1, k-1) = Z*V(2:N-1,k);
             end
-            if its_call > 0
+            
+            % todo why differs on put/call?
+            if Option.Type == OptionType.Call
                 V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
             else
                 V(1,k-1) = 2*V(2,k)-V(3,k);

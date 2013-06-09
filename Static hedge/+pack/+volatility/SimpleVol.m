@@ -8,8 +8,8 @@ classdef SimpleVol < pack.volatility.Volatility
             obj.xVol = Vol;
         end
         
-        function vol = Vol(obj, ~)
-            vol = obj.xVol;
+        function vol = Vol(obj)
+            vol = [obj.xVol];
         end
     end
 end

@@ -1,5 +1,5 @@
 classdef (Abstract) Volatility
     methods(Abstract)
-        Vol(obj, Gamma)
+        Vol(obj)
     end
 end

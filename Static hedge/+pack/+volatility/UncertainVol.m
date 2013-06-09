@@ -10,12 +10,8 @@ classdef UncertainVol < pack.volatility.Volatility
             obj.xVolMax = VolMax;
         end
         
-        function vol = Vol(obj, Gamma)
-            if Gamma >= 0
-                vol = obj.xVolMin;
-            else
-                vol = obj.xVolMax;
-            end
+        function vol = Vol(obj)
+            vol = [obj.xVolMin, obj.xVolMax];
         end
     end
 end

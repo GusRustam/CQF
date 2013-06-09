@@ -19,7 +19,7 @@ classdef DigitalOption < pack.options.OptionBase
         
          %% Single option price
         function v = Value(obj, Spot, Vol, RFR, Method, Size)
-            v = SingleOptionValue(obj, Spot, Vol, RFR, Method, Size);
+            v = pack.options.SingleOptionValue(obj, Spot, Vol, RFR, Method, Size);
         end
         
         %% Constructor
