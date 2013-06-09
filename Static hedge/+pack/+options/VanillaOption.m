@@ -10,8 +10,8 @@ classdef VanillaOption < pack.options.OptionBase
         end
         
         %% Single option price
-        function v = Value(obj, Spot, Vol, RFR)
-            v = SingleOptionValue(obj, Spot, Vol, RFR);
+        function v = Value(obj, Spot, Vol, RFR, Method, Size)
+            v = SingleOptionValue(obj, Spot, Vol, RFR, Method, Size);
         end
         
         %% Constructor

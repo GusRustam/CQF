@@ -13,7 +13,7 @@ classdef (Abstract) OptionBase
     
     methods(Abstract)
         Payoff(obj, Price)
-        Value(obj, Spot, Vol, RFR)
+        Value(obj, Spot, Vol, RFR, Method, Size)
     end
     
     methods
