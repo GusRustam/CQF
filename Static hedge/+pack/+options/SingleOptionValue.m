@@ -85,11 +85,8 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
             end
         end
         
-        if Option.Type == OptionType.Call
-            V(N,:) = 2*V(N-1,:)-V(N-2,:);
-        else
-            V(1,:) = 2*V(2,:)-V(3,:);
-        end
+        V(N,:) = 2*V(N-1,:)-V(N-2,:);
+        V(1,:) = 2*V(2,:)-V(3,:);
     elseif isa(Vol, uncertainVolClass.Name)
         s_min = min(Sigma)/100;
         s_max = max(Sigma)/100;
@@ -143,12 +140,8 @@ function [ Value, Surface ] = SingleOptionValue( Option, Spot, Vol, RFR, Method,
                 V(2:N-1, k-1) = Z*V(2:N-1,k);
             end
             
-            % todo why differs on put/call?
-            if Option.Type == OptionType.Call
-                V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
-            else
-                V(1,k-1) = 2*V(2,k)-V(3,k);
-            end
+            V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
+            V(1,k-1) = 2*V(2,k)-V(3,k);
         end
     end
     

@@ -14,7 +14,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
         Terms(i) = OptionPack.Options(i).Term;
         Kinds{i} = OptionPack.Options(i).Kind;
         Strikes(i) = OptionPack.Options(i).Strike;
-        if strcmpi(OptionPack.Options(i).Type, 'CALL')
+        if OptionPack.Options(i).Type == OptionType.Call
             ItsCalls(i) = 1; 
         else
             ItsCalls(i) = -1;
@@ -28,20 +28,14 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     end
     
     if nargin < 2
-        Scheme = 'Explicit';
-    end
-    
-    if strcmpi(Scheme, 'Implicit')
-        implicit = 1;
-    else
-        implicit = -1;
+        Scheme = FDMScheme.Explicit;
     end
       
     %% Grid parameters
     maxS = 2*max(Strikes);
     dS = maxS / (N - 1);
     
-    if strcmpi(Scheme, 'Implicit')
+    if Scheme == FDMScheme.Implicit
         if nargin < 4
             K = N;
         end            
@@ -53,6 +47,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
 
     S = 0:dS:maxS;    
     j = 0:N-1;
+    
     %% Boundary conditions (european call option)
     V = zeros(N, K);
 
@@ -60,15 +55,14 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     % Upper boundary (S = maxS): non-static: V(Si,Tk) = 2*V(Si-1,Tk)-V(Si-2,Tk)
     % and will be calculated during iterations
     % Right boundary (T = Term): V(Si, T) = max(Si - Strike, 0)
-    for i=1:NumOptions
+    for i = 1:NumOptions
         tau = min(floor(Terms(i) / dT)+1, K);
-%         if tau > K
-%             tau = K;
-%         end
-        if strcmpi(Kinds{i}, 'DIGITAL')
+        if Kinds{i} == OptionKind.Digital
             V(ItsCalls(i)*(S-Strikes(i))>0, tau) = V(ItsCalls(i)*(S-Strikes(i))>0, tau) + 1;
-        elseif strcmpi(Kinds{i}, 'VANILLA')
+        elseif Kinds{i} == OptionKind.Vanilla
             V(:, tau) = V(:, tau) + max(ItsCalls(i)*(S-Strikes(i))', zeros(N,1));
+        else
+            throw(['PriceOptionPack:Unsupported option kind ' OptionKind]);
         end
     end
     
@@ -78,14 +72,14 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     end
 
     %% Calculating option value on the grid
-    if strcmpi(VolModel, 'CONST')
+    if VolModel == VolatilityModel.Constant
         s = Sigma/100;
         r = RFR/100;
         a = 0.5 * (s*j).^2  * dT;
         b = 0.5 * r * j * dT; 
         c = -r * dT;
 
-        if strcmpi(Scheme, 'Implicit')
+        if Scheme == FDMScheme.Implicit
             A = -a + b;
             B = 1 + 2*a - c;
             C = -a - b;
@@ -96,15 +90,12 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
         end
 
         Z = diag(C(2:N-2),1) + diag(B(2:N-1)) + diag(A(3:N-1),-1);
-        %if strcmpi(Type, 'CALL')
-            Z(N-2,N-2) = B(N-1)+2*C(N-1);
-            Z(N-2,N-3) = A(N-1)-C(N-1);
-        %else
-            Z(1,1) = B(2)+2*A(1);
-            Z(1,2) = C(2)-A(2);
-        %end
+        Z(N-2,N-2) = B(N-1)+2*C(N-1);
+        Z(N-2,N-3) = A(N-1)-C(N-1);
+        Z(1,1) = B(2)+2*A(1);
+        Z(1,2) = C(2)-A(2);
 
-        if strcmpi(Scheme, 'Implicit')
+        if Scheme == FDMScheme.Implicit
             for k=K:-1:2
                 V(2:N-1, k-1) = V(2:N-1, k-1) + Z\V(2:N-1,k);
             end
@@ -114,12 +105,9 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
             end
         end
         
-        %if strcmpi(Type, 'CALL')
-            V(N,:) = 2*V(N-1,:)-V(N-2,:);
-        %else
-            V(1,:) = 2*V(2,:)-V(3,:);
-        %end
-    elseif strcmpi(VolModel, 'UNCERTAIN')
+        V(N,:) = 2*V(N-1,:)-V(N-2,:);
+        V(1,:) = 2*V(2,:)-V(3,:);
+    elseif VolModel == VolatilityModel.Uncertain
         s_min = min(Sigma)/100;
         s_max = max(Sigma)/100;
         r = RFR/100;
@@ -129,7 +117,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
         b = 0.5 * r * j * dT; 
         c = -r * dT;
 
-        if strcmpi(Scheme, 'Implicit')
+        if Scheme == FDMScheme.Implicit
             A_min = -a_min + b;
             B_min = 1 + 2*a_min - c; 
             C_min = -a_min - b;
@@ -149,34 +137,31 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
 
         Z_min = diag(C_min(2:N-2),1) + diag(B_min(2:N-1)) + diag(A_min(3:N-1),-1);
         Z_max = diag(C_max(2:N-2),1) + diag(B_max(2:N-1)) + diag(A_max(3:N-1),-1);
-        %if strcmpi(Type, 'CALL')
-            Z_min(N-2,N-2) = B_min(N-1)+2*C_min(N-1);
-            Z_min(N-2,N-3) = A_min(N-1)-C_min(N-1);
-            Z_max(N-2,N-2) = B_max(N-1)+2*C_max(N-1);
-            Z_max(N-2,N-3) = A_max(N-1)-C_max(N-1);
-        %else
-            Z_min(1,1) = B_min(2)+2*A_min(1);
-            Z_min(1,2) = C_min(2)-A_min(2);
-            Z_max(1,1) = B_max(2)+2*A_max(1);
-            Z_max(1,2) = C_max(2)-A_max(2);
-        %end
-
-        for k=K:-1:2
+        
+        Z_min(N-2,N-2) = B_min(N-1)+2*C_min(N-1);
+        Z_min(N-2,N-3) = A_min(N-1)-C_min(N-1);
+        Z_max(N-2,N-2) = B_max(N-1)+2*C_max(N-1);
+        Z_max(N-2,N-3) = A_max(N-1)-C_max(N-1);
+        Z_min(1,1) = B_min(2)+2*A_min(1);
+        Z_min(1,2) = C_min(2)-A_min(2);
+        Z_max(1,1) = B_max(2)+2*A_max(1);
+        Z_max(1,2) = C_max(2)-A_max(2);
+        
+        for k = K:-1:2
             Gamma = diff(diff(V(:,k)));
             GammaNeg = Gamma <= 0;
             Z = Z_min;
             Z(GammaNeg, :) = Z_max(GammaNeg, :);
-            if implicit > 0
+            if Scheme == FDMScheme.Implicit
                 V(2:N-1, k-1) = V(2:N-1, k-1) + Z\V(2:N-1,k);
             else
                 V(2:N-1, k-1) = V(2:N-1, k-1) +  Z*V(2:N-1,k);
             end
-            %if its_call > 0
-                V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
-            %else
-                V(1,k-1) = 2*V(2,k)-V(3,k);
-           % end
+            V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
+            V(1,k-1) = 2*V(2,k)-V(3,k);
         end
+    else
+        throw(['PriceOption:Unsupported volatility model ' VolModel]);
     end
     
     surface = V;
