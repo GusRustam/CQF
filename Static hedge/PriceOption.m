@@ -1,7 +1,9 @@
 function [price, surface] = PriceOption(Option, Asset, RFR, Scheme, N)
+    import enums.*
+
     Spot = Asset.Spot;
     VolModel = Asset.VolatilityModel;
-    Sigma = Asset.Volatility;
+    Sigma = Asset.Vol;
     
     Strike = Option.Strike;
     Term = Option.Term;

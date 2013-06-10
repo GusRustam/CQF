@@ -1,4 +1,6 @@
 function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
+    import enums.*
+
     Spot = OptionPack.Asset.Spot;
     VolModel = OptionPack.Asset.VolatilityModel;
     Sigma = OptionPack.Asset.Vol;

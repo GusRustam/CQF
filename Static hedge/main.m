@@ -1,6 +1,8 @@
 clear all
 close all
 
+import enums.*
+
 Asset.Spot = 5;
 Asset.VolatilityModel = VolatilityModel.Constant;
 Asset.Vol = 20;
