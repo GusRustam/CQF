@@ -1,4 +1,4 @@
-function [price, surface] = PriceOption(Option, Asset, RFR, Scheme, N)
+function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N)
     import enums.*
 
     Spot = Asset.Spot;

@@ -6,15 +6,15 @@ function [ val, point ] = Optimize( func, initial_guess, delta, tolerance, max_c
     if (nargin < 5) max_calc = 5000; end; %#ok
     if (nargin < 4) tolerance = 1e-4; end; %#ok
     if (nargin < 3) delta = sum(initial_guess.^2)/10; end; %#ok
-    if (nargin < 2) throw('Optimize:Initial guess is madatory'); end; %#ok
+    if (nargin < 2) throw(MException('Optimize:InvalidOperation','Initial guess is madatory'); end; %#ok
     
     % Checking if initial guess is ok
     if ismatrix(initial_guess) 
         if size(initial_guess,1) ~= 1 && size(initial_guess,2) ~= 1
-            throw('Optimize:Inital guess must be a vector');
+            throw(MException('Optimize:InvalidOperation',':Inital guess must be a vector'));
         end
     else
-        throw('Optimize:Inital guess must be a vector');
+        throw(MException('Optimize:InvalidOperation',':Inital guess must be a vector'));
     end
     
     %% Preparation
