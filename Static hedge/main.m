@@ -16,8 +16,15 @@ Engine.Method = FDMScheme.Explicit;
 
 RiskFreeRate = 7;
 
-[SimpleValue, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
-[bsSimpleValue, bsValueSurface] = DigitalBS(Option, Asset, RiskFreeRate, [100 K]);
+[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
+[~, bsValueSurface] = DigitalBS(Option, Asset, RiskFreeRate, [100 K]);
+plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
+
+pause;
+
+Option.Kind = OptionKind.Vanilla;
+[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
+[~, bsValueSurface] = VanillaBS(Option, Asset, RiskFreeRate, [100 K]);
 plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
 
 % clear variables
