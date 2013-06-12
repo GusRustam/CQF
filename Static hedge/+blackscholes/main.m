@@ -2,6 +2,7 @@ clear variables
 close all
 
 import enums.*
+import blackscholes.*
 
 Option.Kind = OptionKind.Digital;
 Option.Type = OptionType.Call;
@@ -17,15 +18,19 @@ Engine.Method = FDMScheme.Explicit;
 RiskFreeRate = 7;
 
 [~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
-[~, bsValueSurface] = DigitalBS(Option, Asset, RiskFreeRate, [100 K]);
+[~, bsValueSurface] = PriceOptionBS(Option, Asset, RiskFreeRate, [100 K]);
 plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
 
 pause;
 
 Option.Kind = OptionKind.Vanilla;
 [~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
-[~, bsValueSurface] = VanillaBS(Option, Asset, RiskFreeRate, [100 K]);
+[~, bsValueSurface] = PriceOptionBS(Option, Asset, RiskFreeRate, [100 K]);
 plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
+
+pause;
+
+close all
 
 % clear variables
 % close all
