@@ -18,7 +18,7 @@ RiskFreeRate = 7;
 
 [SimpleValue, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
 [bsSimpleValue, bsValueSurface] = DigitalBS(Option, Asset, RiskFreeRate, [100 K]);
-
+plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
 
 % clear variables
 % close all

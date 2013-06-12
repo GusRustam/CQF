@@ -40,31 +40,30 @@ function [ v, surface ] = DigitalBS( Option, Asset, RFR, Grid )
         surface = 0;
     elseif Term > 0
         % user asks for the whole payoff surface
-        max_strike = 2 * Strike;
+        max_spot = 2 * Strike;
         
-        num_strikes = Grid(1); % strikes are in rows
+        num_spots = Grid(1);   % spots are in rows
         num_terms = Grid(2);   % terms are in columns
         
-        StrikeGrid = (max_strike:-(max_strike/(num_strikes-1)):0)'; % first dimension 
+        SpotGrid = (0:(max_spot/(num_spots-1)):max_spot)'; % first dimension 
         TermGrid = Term:(-Term/(num_terms-1)):0; % second dimension
         
         s = Sigma/100;
         r = RFR/100;
         
-        term1 = repmat(log(Spot./StrikeGrid),[1 num_terms]);
-        term2 = repmat((r+s^2/2)*TermGrid,[num_strikes 1]);
-        term3 = repmat(s*sqrt(TermGrid),[num_strikes 1]);
+        term1 = repmat(log(SpotGrid/Strike),[1 num_terms]);
+        term2 = repmat((r-s^2/2)*TermGrid,[num_spots 1]);
+        term3 = repmat(s*sqrt(TermGrid),[num_spots 1]);
         
-        d1 = (term1 + term2)./term3;
+        d = (term1 + term2)./term3;
               
-        d2 = d1 - term3;
-        surface = repmat(exp(-r*TermGrid),[num_strikes 1]) .* normcdf(P*d2);
+        surface = repmat(exp(-r*TermGrid),[num_spots 1]) .* normcdf(P*d);
         tmp = surface(:,end);
         
-        tmp(P*(StrikeGrid - Strike)<=0) = 1;
-        tmp(P*(StrikeGrid - Strike)>0) = 0;
+        tmp(P*(SpotGrid - Strike)>0) = 1;
+        tmp(P*(SpotGrid - Strike)<=0) = 0;
         surface(:,end) = tmp;
-        v = interp1(StrikeGrid, surface(:,1)', Spot);       
+        v = interp1(SpotGrid, surface(:,1)', Spot);       
     else
         % user asks only for payoff profile
     end
