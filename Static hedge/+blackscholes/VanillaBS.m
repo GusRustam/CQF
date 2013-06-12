@@ -55,7 +55,7 @@ function [ v, surface ] = VanillaBS( Option, Asset, RFR, Grid  )
         t1 = repmat(SpotGrid,[1 num_terms]).*normcdf(P*d1); %repmat(SpotGrid,[1 num_terms]).
         t2 = Strike*repmat(exp(-r*TermGrid),[num_spots 1]).*normcdf(P*d2);
         surface = P*(t1 - t2);
-        
+ 
         v = interp1(SpotGrid, surface(:,1)', Spot);       
     else
         % user asks only for payoff profile

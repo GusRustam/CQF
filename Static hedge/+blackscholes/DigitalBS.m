@@ -55,8 +55,7 @@ function [ v, surface ] = DigitalBS( Option, Asset, RFR, Grid )
         
         d = (term1 + term2)./term3;
               
-        surface = repmat(exp(-r*TermGrid),[num_spots 1]) .* normcdf(P*d);
-
+        surface = repmat(exp(-r*TermGrid),[num_spots 1]) .* normcdf(P*d);     
         v = interp1(SpotGrid, surface(:,1)', Spot);       
     else
         % user asks only for payoff profile

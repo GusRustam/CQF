@@ -5,29 +5,35 @@ import enums.*
 import blackscholes.*
 
 Option.Kind = OptionKind.Digital;
-Option.Type = OptionType.Call;
-Option.Strike = 10;
+Option.Type = OptionType.Put;
+Option.Strike = 7;
 Option.Term = 1;
 
 Asset.Spot = 5;
 Asset.Vol = 20;
 Asset.VolatilityModel = VolatilityModel.Constant;
 
-Engine.Method = FDMScheme.Explicit;
+Method = FDMScheme.Implicit;
 
 RiskFreeRate = 7;
 
-[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
+[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Method, 100, 200 );
+%Pack.Asset = Asset;
+%Pack.Options(1) = Option;
+%Pack.RFR = RiskFreeRate;
+%[~, valueSurface, K] = PriceOptionPack(Pack, Method, 100, 200 );
 [~, bsValueSurface] = PriceOptionBS(Option, Asset, RiskFreeRate, [100 K]);
 plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
-
+fprintf('Press any key to continue\n');
 pause;
 
 Option.Kind = OptionKind.Vanilla;
-[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Engine, 100);
+[~, valueSurface, K] = PriceOption(Option, Asset, RiskFreeRate, Method, 100);
+%Pack.Options(1) = Option;
+%[~, valueSurface, K] = PriceOptionPack(Pack, Method, 100, 200 );
 [~, bsValueSurface] = PriceOptionBS(Option, Asset, RiskFreeRate, [100 K]);
 plotdiff(valueSurface, bsValueSurface, valueSurface-bsValueSurface);
-
+fprintf('Press any key to stop\n');
 pause;
 
 close all
