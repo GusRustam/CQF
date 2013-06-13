@@ -1,7 +1,9 @@
 function [ v, surface ] = PriceOptionBS( Option, Asset, RFR, Grid )
-   import enums.*
-   import blackscholes.*
-   if Option.Kind == OptionKind.Digital 
+    import enums.*
+    import pricing.*
+    import pricing.blackscholes.*
+    
+    if Option.Kind == OptionKind.Digital 
        [ v, surface ] = DigitalBS(Option, Asset, RFR, Grid);
    elseif Option.Kind == OptionKind.Vanilla
        [ v, surface ] = VanillaBS(Option, Asset, RFR, Grid);

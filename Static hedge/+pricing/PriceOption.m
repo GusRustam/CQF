@@ -1,5 +1,7 @@
 function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
     import enums.*
+    import pricing.*
+    import pricing.blackscholes.*
 
     Spot = Asset.Spot;
     VolModel = Asset.VolatilityModel;

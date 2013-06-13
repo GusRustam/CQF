@@ -1,5 +1,7 @@
 function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     import enums.*
+    import pricing.*
+    import pricing.blackscholes.*
 
     Spot = OptionPack.Asset.Spot;
     VolModel = OptionPack.Asset.VolatilityModel;

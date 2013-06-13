@@ -2,7 +2,8 @@ clear variables
 close all
 
 import enums.*
-import blackscholes.*
+import pricing.*
+import pricing.blackscholes.*
 
 Option.Kind = OptionKind.Digital;
 Option.Type = OptionType.Put;
