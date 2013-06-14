@@ -68,13 +68,10 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
         end
 
         Z = diag(C(2:N-2),1) + diag(B(2:N-1)) + diag(A(3:N-1),-1);
-        %if Type == OptionType.Call
-            Z(N-2,N-2) = B(N-1)+2*C(N-1);
-            Z(N-2,N-3) = A(N-1)-C(N-1);
-        %else
-            Z(1,1) = B(2)+2*A(1);
-            Z(1,2) = C(2)-A(2);
-        %end
+        Z(N-2,N-2) = B(N-1)+2*C(N-1);
+        Z(N-2,N-3) = A(N-1)-C(N-1);
+        Z(1,1) = B(2)+2*A(1);
+        Z(1,2) = C(2)-A(2);
 
         if Scheme == FDMScheme.Implicit
             for k=K:-1:2
@@ -86,11 +83,8 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
             end
         end
         
-        %if Type == OptionType.Call
-            V(N,:) = 2*V(N-1,:)-V(N-2,:);
-        %else
-            V(1,:) = 2*V(2,:)-V(3,:);
-        %end
+        V(N,:) = 2*V(N-1,:)-V(N-2,:);
+        V(1,:) = 2*V(2,:)-V(3,:);
     elseif VolModel == VolatilityModel.Uncertain
         s_min = min(Sigma)/100;
         s_max = max(Sigma)/100;
@@ -121,17 +115,16 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
 
         Z_min = diag(C_min(2:N-2),1) + diag(B_min(2:N-1)) + diag(A_min(3:N-1),-1);
         Z_max = diag(C_max(2:N-2),1) + diag(B_max(2:N-1)) + diag(A_max(3:N-1),-1);
-        %if Type == OptionType.Call
-            Z_min(N-2,N-2) = B_min(N-1)+2*C_min(N-1);
-            Z_min(N-2,N-3) = A_min(N-1)-C_min(N-1);
-            Z_max(N-2,N-2) = B_max(N-1)+2*C_max(N-1);
-            Z_max(N-2,N-3) = A_max(N-1)-C_max(N-1);
-        %else
-            Z_min(1,1) = B_min(2)+2*A_min(1);
-            Z_min(1,2) = C_min(2)-A_min(2);
-            Z_max(1,1) = B_max(2)+2*A_max(1);
-            Z_max(1,2) = C_max(2)-A_max(2);
-        %end
+
+        Z_min(N-2,N-2) = B_min(N-1)+2*C_min(N-1);
+        Z_min(N-2,N-3) = A_min(N-1)-C_min(N-1);
+        Z_max(N-2,N-2) = B_max(N-1)+2*C_max(N-1);
+        Z_max(N-2,N-3) = A_max(N-1)-C_max(N-1);
+
+        Z_min(1,1) = B_min(2)+2*A_min(1);
+        Z_min(1,2) = C_min(2)-A_min(2);
+        Z_max(1,1) = B_max(2)+2*A_max(1);
+        Z_max(1,2) = C_max(2)-A_max(2);
 
         for k=K:-1:2
             Gamma = diff(diff(V(:,k)));
@@ -143,11 +136,9 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
             else
                 V(2:N-1, k-1) = Z*V(2:N-1,k);
             end
-            %if Type == OptionType.Call
-                V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
-            %else
-                V(1,k-1) = 2*V(2,k)-V(3,k);
-            %end
+            
+            V(N,k-1) = 2*V(N-1,k)-V(N-2,k);
+            V(1,k-1) = 2*V(2,k)-V(3,k);
         end
     else
         throw(['PriceOption:Unsupported volatility model ' VolModel]);
