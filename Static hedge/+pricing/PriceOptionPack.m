@@ -9,6 +9,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     RFR = OptionPack.RFR;   
     NumOptions = length(OptionPack.Options);
     
+    Amounts = zeros(1, NumOptions);
     Terms = zeros(1, NumOptions);
     Kinds = cell(1, NumOptions);
     Strikes = zeros(1, NumOptions);
@@ -37,7 +38,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     end
       
     %% Grid parameters
-    maxS = 2*max(Strikes);
+    maxS = 2*max(Strikes(Amounts ~= 0));
     dS = maxS / (N - 1);
     
     if Scheme == FDMScheme.Implicit
@@ -61,13 +62,15 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     % and will be calculated during iterations
     % Right boundary (T = Term): V(Si, T) = max(Si - Strike, 0)
     for i = 1:NumOptions
-        tau = min(floor(Terms(i) / dT)+1, K);
-        if Kinds{i} == OptionKind.Digital
-            V(ItsCalls(i)*(S-Strikes(i))>0, tau) = V(ItsCalls(i)*(S-Strikes(i))>0, tau) + Amounts(i);
-        elseif Kinds{i} == OptionKind.Vanilla
-            V(:, tau) = V(:, tau) + Amounts(i)*max(ItsCalls(i)*(S-Strikes(i))', zeros(N,1));
-        else
-            throw(['PriceOptionPack:Unsupported option kind ' OptionKind]);
+        if Amounts(i) ~= 0 
+            tau = min(floor(Terms(i) / dT)+1, K);
+            if Kinds{i} == OptionKind.Digital
+                V(ItsCalls(i)*(S-Strikes(i))>0, tau) = V(ItsCalls(i)*(S-Strikes(i))>0, tau) + Amounts(i);
+            elseif Kinds{i} == OptionKind.Vanilla
+                V(:, tau) = V(:, tau) + Amounts(i)*max(ItsCalls(i)*(S-Strikes(i))', zeros(N,1));
+            else
+                throw(['PriceOptionPack:Unsupported option kind ' OptionKind]);
+            end
         end
     end
     

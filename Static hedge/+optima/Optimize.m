@@ -119,7 +119,7 @@ function [ val, point ] = Optimize( func, initial_guess, delta, tolerance, max_c
                 for i=1:num_vals
                     if i ~= lpi
                         simplex(:,i) = 0.5*(simplex(:,i)+simplex(:,lpi));
-                        y(i) = func(sum(simplex(i)));
+                        y(i) = func(simplex(:,i));
                     end
                 end
                 num_calc = num_calc + num_vals;

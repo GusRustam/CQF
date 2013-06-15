@@ -26,7 +26,7 @@ function [ v, surface ] = DigitalBS( Option, Asset, RFR, Grid )
     s = Sigma/100;
     r = RFR/100;
 
-    if nargin < 4
+    if nargin < 4 || nargout < 2
         % User specified no grid, hence we'll give him price only
         if Term > 0 
             d = (log(Spot/Strike) + (r-s^2/2)*Term)/(s*sqrt(Term));
