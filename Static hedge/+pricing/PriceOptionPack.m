@@ -18,6 +18,7 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
         Terms(i) = OptionPack.Options(i).Term;
         Kinds{i} = OptionPack.Options(i).Kind;
         Strikes(i) = OptionPack.Options(i).Strike;
+        Amounts(i) = OptionPack.Options(i).Amount;
         if OptionPack.Options(i).Type == OptionType.Call
             ItsCalls(i) = 1; 
         else
@@ -62,9 +63,9 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
     for i = 1:NumOptions
         tau = min(floor(Terms(i) / dT)+1, K);
         if Kinds{i} == OptionKind.Digital
-            V(ItsCalls(i)*(S-Strikes(i))>0, tau) = V(ItsCalls(i)*(S-Strikes(i))>0, tau) + 1;
+            V(ItsCalls(i)*(S-Strikes(i))>0, tau) = V(ItsCalls(i)*(S-Strikes(i))>0, tau) + Amounts(i);
         elseif Kinds{i} == OptionKind.Vanilla
-            V(:, tau) = V(:, tau) + max(ItsCalls(i)*(S-Strikes(i))', zeros(N,1));
+            V(:, tau) = V(:, tau) + Amounts(i)*max(ItsCalls(i)*(S-Strikes(i))', zeros(N,1));
         else
             throw(['PriceOptionPack:Unsupported option kind ' OptionKind]);
         end
@@ -154,8 +155,8 @@ function [price, surface, numK] = PriceOptionPack(OptionPack, Scheme, N, K)
         for k = K:-1:2
             Gamma = diff(diff(V(:,k)));
             GammaNeg = Gamma <= 0;
-            Z = Z_min;
-            Z(GammaNeg, :) = Z_max(GammaNeg, :);
+            Z = Z_max;
+            Z(GammaNeg, :) = Z_min(GammaNeg, :);
             if Scheme == FDMScheme.Implicit
                 V(2:N-1, k-1) = V(2:N-1, k-1) + Z\V(2:N-1,k);
             else

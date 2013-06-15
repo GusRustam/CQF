@@ -9,6 +9,7 @@ Option.Kind = OptionKind.Digital;
 Option.Type = OptionType.Put;
 Option.Strike = 7;
 Option.Term = 1;
+Option.Amount = 1;
 
 Asset.Spot = 5;
 Asset.Vol = 20;

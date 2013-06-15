@@ -11,6 +11,7 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
     Term = Option.Term;
     Type = Option.Type;
     Kind = Option.Kind;
+    Amount = Option.Amount;
 
     if (nargin < 6) K = 30; end; %#ok
     if (nargin < 5) N = 30; end; %#ok
@@ -42,9 +43,9 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
        its_call = -1;
     end
     if Kind == OptionKind.Digital
-        V(its_call*(S-Strike)>0, K) = 1;
+        V(its_call*(S-Strike)>0, K) = Amount;
     elseif Kind == OptionKind.Vanilla
-        V(:, K) = max(its_call*(S-Strike)', zeros(N,1));
+        V(:, K) = Amount*max(its_call*(S-Strike)', zeros(N,1));
     else
         throw(['PriceOption:Unsupported option kind ' OptionKind]);
     end
@@ -129,8 +130,8 @@ function [price, surface, K] = PriceOption(Option, Asset, RFR, Scheme, N, K)
         for k=K:-1:2
             Gamma = diff(diff(V(:,k)));
             GammaNeg = Gamma <= 0;
-            Z = Z_min;
-            Z(GammaNeg, :) = Z_max(GammaNeg, :);
+            Z = Z_max;
+            Z(GammaNeg, :) = Z_min(GammaNeg, :);
             if Scheme == FDMScheme.Implicit > 0
                 V(2:N-1, k-1) = Z\V(2:N-1,k);
             else
