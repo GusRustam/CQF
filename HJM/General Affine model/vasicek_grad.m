@@ -1,0 +1,16 @@
+function [ grad ] = vasicek_grad( params, r0, T  )
+    beta = params(1);
+    gamma = params(2);
+    etha = params(3);
+    
+    grad(1) = ((1 - exp((-gamma)*T))^2/(4*gamma^3) + ((1 - exp((-gamma)*T))/gamma - T)/(2*gamma^2))/T;
+    
+    grad(2) = (1/T)*(-((3*beta*(1 - exp((-gamma)*T))^2)/(4*gamma^4)) - ...
+        ((1 - exp((-gamma)*T))*r0)/gamma^2 - (etha*((1 - exp((-gamma)*T))/gamma - T))/ ...
+        gamma^2 + (2*(-(beta/2) + etha*gamma)*((1 - exp((-gamma)*T))/gamma - T))/ ...
+        gamma^3 + (beta*(1 - exp((-gamma)*T))*T)/(exp(gamma*T)*(2*gamma^3)) + ...
+        (r0*T)/(exp(gamma*T)*gamma) - ((-(beta/2) + etha*gamma)* ...
+        (-((1 -exp((-gamma)*T))/gamma^2) + T/(exp(gamma*T)*gamma)))/gamma^2);
+ 
+    grad(3) = -(((1 - exp((-gamma)*T))/gamma - T)/(gamma*T));
+end
