@@ -187,7 +187,7 @@ The last issue I wanted to discuss is volatility structure. In \cite[par. 37.15]
 To avoid it I implemented a non-infinitesimal short rate model as it is explained in there. In order to switch from standard to non-infinitesimal model it is necessary to set variable LOGNORMAL from $0$ to $1$.
 
 One thing left unclear for me was if it is correct to use same principal components (e.g. same covariance matrix)? In non-infinitesimal model we work with m times compounded interest rates. In this case it might be correct to recalculate our interest rates into corresponding compounding and calculate covariance matrix for such rates. Recalculation is done using formula $r_m = m\left((1+r_1)^{1/m}-1\right)$. There's significant difference in principal components:\\
-% \includegraphics[scale=0.4]{compounding_PCA.jpg}\\
+ \includegraphics[scale=0.4]{compounding_PCA.jpg}\\
 In this case no negative interest rates occur.
 \subsection{Pricing financial instruments}
 \subsubsection{Zero-coupon bond}
@@ -203,9 +203,10 @@ Price of derivatives in question can be found as a solution of Black-Scholes PDE
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} +rS\frac{\partial V}{\partial S} - rV = 0
 \end{equation}
 Discretization of this equation requires us to introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_i = i\delta t, i = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_k = k\delta s, k = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
+\includegraphics[scale=0.4]{FDM-1.png}\\
 Implicit FDM approximation at point $(i,k)$ is the following:
 \begin{equation}
-V_t + \sigma^2 S_i^2 V_{\overline{x}x} + r S_i V_x + rV_i = 0
+V_t + \sigma^2 S_i^2 V_{\overline{x}x} + r S_i V_{\mathring{x}} + rV_i = 0
 \end{equation}
 Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and its convergence.
 
@@ -303,10 +304,10 @@ Using rules of \href{http://en.wikipedia.org/wiki/Matrix\_calculus}{matrix calcu
 \iff \nonumber \\
 \mathbf{X^T}(\mathbf{y-X\theta}) = 0 \iff \theta = \mathbf{\left(X^T X\right)^{-1}X^T y}
 \end{alignat}
-The latter is a so-called ``normal equation''. It is very convinient to use allowing to obtain solution in one step. This contrasts to iterative methods of solving optimization problem, where you would need to normalize independent variables, calculate gradient of cost function $J(\theta)$ and searching for optimal step size. 
+The latter is a so-called ``normal equation''. It is very convenient to use allowing to obtain solution in one step. This contrasts to iterative methods of solving optimization problem, where you would need to normalize independent variables, calculate gradient of cost function $J(\theta)$ and searching for optimal step size. 
 
 Example of approximation of eigenvectors with $3^{rd}$ order polynomials below:\\
-%\includegraphics[scale=0.6]{fitting.jpg}\\
+\includegraphics[scale=0.6]{fitting.jpg}\\
 
 %% ---> BIBLIOGRAPHY <--- %%
 \begin{thebibliography}{9}

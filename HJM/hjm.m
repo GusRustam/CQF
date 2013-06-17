@@ -1,6 +1,6 @@
 %% Cleanup and data loading
 clc;
-clear all;
+clear variables;
 close all;
 
 %% Setting up constants
@@ -17,8 +17,8 @@ BANK_ENGLAND_FWD = 2;
 SELECTED_MODEL = BANK_ENGLAND_FWD;
 
 LOGNORMAL = 1;          % 0 - standard model, 1 - non-infinitesimal
-APPROXIMATE = 1;        % 0 - no principal components approximation, 1 - polynomial approximation
-QUASY_RANDOM = 1;       % 0 - use quasi-random, 1 - low-discrepancy numbers
+APPROXIMATE = 0;        % 0 - no principal components approximation, 1 - polynomial approximation
+QUASY_RANDOM = 0;       % 0 - use quasi-random, 1 - low-discrepancy numbers
 
 %% Loading data
 switch SELECTED_MODEL
@@ -79,6 +79,8 @@ end
 
 %% And plotting eigenvectors
 plot(terms, eigen_vectors, 'YDataSource', 'eigen_vectors', 'XDataSource', 'terms');
+pause 
+close all
 
 %% Fitting eigenvectors
 X = polynom(terms', 3);
@@ -87,6 +89,8 @@ fitted_eigen_vectors = X*theta;
 
 %% And plotting eigenvectors together with fitted eigenvectors
 plot(terms,[eigen_vectors fitted_eigen_vectors], 'YDataSource', 'eigen_vectors', 'XDataSource', 'terms');
+pause 
+close all
 
 %% Estimating risk-neutral drift and volatility
 if APPROXIMATE == 0
@@ -109,6 +113,8 @@ drift = sum(pcv, 2);
 
 %% And plotting drift
 plot(terms, drift, 'YDataSource', 'drift_vector', 'XDataSource', 'terms');
+pause
+close all
 
 %% Monte-Carlo simulation using Musiela parametrization
 % At the moment I have a current forward rate curve
@@ -191,3 +197,5 @@ Cap.Price = sum(sum(Cap.Caplets))/size(Cap.Caplets,1)/size(Cap.Caplets,2);
 
 %% And plotting curvez
 mesh(f); figure(gcf);
+pause 
+close all
