@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Forms;
 
@@ -10,24 +9,33 @@ namespace TrinomialTree {
         }
 
         private void CalculateClick(object sender, EventArgs e) {
-
+            var x = new BinomialTree(
+                new[] { 0.0608, 0.0611, 0.0621, 0.0631, 0.0655 }, 
+                new[] {0.00, 0.17, 0.16, 0.15, 0.13});
         }
     }
 
-
     public interface ISolver {
-        double? Solve(Func<double, double> what, double guess = 0);
+        double? Solve(Func<double, double> what, double from, double to);
     }
 
     public class Solver : ISolver {
-        public double? Solve(Func<double, double> what, double guess = 0) {
-            return null;
+        public double? Solve(Func<double, double> what, double from, double to) {
+            Debug.Assert(Math.Sign(what(from))!= Math.Sign(what(to)), "Function must be of different signs on borders");
+            do {
+                var mid = (to + from)/2;
+                var valOnTo = what(to);
+                var valOnMid = what(mid);
+                if (Math.Sign(valOnTo) != Math.Sign(valOnMid)) 
+                    from = mid;
+                else to = mid;
+            } while (Math.Abs(from-to) > 10e-5);
+            return (to + from) / 2;
         }
     }
 
     public class BinomialTree {
-        private readonly double[] _treeRates;
-        private readonly double[] _treePrices;
+        private readonly double[,] _treeRates;
         private readonly double[] _treeVols;
         private readonly int _n;
 
@@ -37,9 +45,10 @@ namespace TrinomialTree {
             Debug.Assert(rates.Length == vols.Length, "Count of rates and volatilities must be equal");
 
             _n = rates.Length;
-            _treeRates = new double[_n];
-            _treePrices = new double[_n];
-            _treeVols = vols; // ?? copy ok?
+            _treeRates = new double[_n,_n];
+            _treeVols = vols; // ?? copy ok ??
+
+            _treeRates[0, 0] = rates[0];
 
             ISolver solver = new Solver();
             for (var i = 1; i < _n; i++) {
@@ -47,41 +56,30 @@ namespace TrinomialTree {
                 var price = Math.Exp(-rates[i]*(i+1));
                 // 2) finding rate which would make bond price equal to calculated price
                 var num = i;
-                var rt = solver.Solve(rate => EvaluatePrice(rate, num) - price);
+                var rt = solver.Solve(rate => EvaluatePrice(rate, num+1) - price, 0.00, 1.00);
+                if (rt == null) throw new InvalidOperationException("Didn't converge!");
+
+                for (var j = 0; j <= i; j++) _treeRates[i, j] = rt.Value * Math.Exp(-2 * _treeVols[i] * j);
             }
         }
 
-        private double EvaluatePrice(double rate, int nodeNum) {
-            // now right-upper node (with index nodeNum) rate is a given rate
-            for (var n = nodeNum; n >= 0; n--) {
+        private double EvaluatePrice(double rate, int num) {
+            var oldPrices = new double[num + 1];
+            var newPrices = new double[num];
+            for (var i = 0; i < num + 1; i++) oldPrices[i] = 1;
 
+            for (var n = num-1; n >= 0; n--) {
+                for (var k = 0; k <= n; k++) {
+                    var rt = (n == num - 1) ? rate*Math.Exp(-2*_treeVols[n]*k) : _treeRates[n, k];
+                    newPrices[n - k] = 0.5*(oldPrices[n-k] + oldPrices[n-k+1])*Math.Exp(-rt);
+                }
+                if (n > 0) for (var k = 0; k <= n; k++) oldPrices[k] = newPrices[k];
             }
-            return -1;
-        }
-    }
-
-    public class ArrayTreeItem {
-        public double Rate { get; private set; }
-        public double Step { get; private set; }
-
-        public ArrayTreeItem(double rate, double step) {
-            Rate = rate;
-            Step = step;
+            return newPrices[0];
         }
     }
 
 
-    public class BinomialTreeNode {
-        public double Rate { get; private set; }
-        public double Price { get; set; }
-        public double Vol { get; private set; }
-        public BinomialTreeNode U { get; private set; }
-        public BinomialTreeNode D { get; private set; }
-
-        public double EvaluatedPrice(double rate) {
-            return -1;
-        }
-    }
 
     //public enum BranchingMode {
     //    Up, Mid, Down
