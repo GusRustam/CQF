@@ -9,8 +9,10 @@ namespace TrinomialTree {
         }
 
         private void CalculateClick(object sender, EventArgs e) {
-            var x = new BinomialTree(
-                new[] { 0.0608, 0.0611, 0.0621, 0.0631, 0.0655 }, 
+// ReSharper disable ObjectCreationAsStatement
+            new BinomialTree(
+// ReSharper restore ObjectCreationAsStatement
+                new[] {0.0608, 0.0611, 0.0621, 0.0631, 0.0655}, 
                 new[] {0.00, 0.17, 0.16, 0.15, 0.13});
         }
     }
@@ -35,31 +37,35 @@ namespace TrinomialTree {
     }
 
     public class BinomialTree {
-        private readonly double[,] _treeRates;
+        private readonly double[] _treeRates;
+        private readonly double[] _treeTerms;
         private readonly double[] _treeVols;
         private readonly int _n;
 
-        // todo another parameter is array of terms
-        // todo compounding convertions
-        public BinomialTree(double[] rates, double[] vols) {
+        public BinomialTree(double[] rates, double[] vols, double[] terms = null) {
             Debug.Assert(rates.Length == vols.Length, "Count of rates and volatilities must be equal");
 
             _n = rates.Length;
-            _treeRates = new double[_n,_n];
-            _treeVols = vols; // ?? copy ok ??
-
-            _treeRates[0, 0] = rates[0];
+            _treeRates = new double[_n];
+            _treeVols = vols;
+            if (terms != null) {
+                Debug.Assert(terms.Length == vols.Length, "Count of rates and volatilities must be equal");
+                _treeTerms = terms;
+            } else {
+                _treeTerms = new double[_n];
+                for (var i = 0; i < _n; i++) _treeTerms[i] = i+1;
+            }
+            _treeRates[0] = rates[0];
 
             ISolver solver = new Solver();
             for (var i = 1; i < _n; i++) {
                 // 1) calculating price of ZCB with term i and rate r[i]
-                var price = Math.Exp(-rates[i]*(i+1));
+                var price = Math.Exp(-rates[i]*_treeTerms[i]);
                 // 2) finding rate which would make bond price equal to calculated price
                 var num = i;
                 var rt = solver.Solve(rate => EvaluatePrice(rate, num+1) - price, 0.00, 1.00);
                 if (rt == null) throw new InvalidOperationException("Didn't converge!");
-
-                for (var j = 0; j <= i; j++) _treeRates[i, j] = rt.Value * Math.Exp(-2 * _treeVols[i] * j);
+                _treeRates[i] = rt.Value;
             }
         }
 
@@ -70,7 +76,7 @@ namespace TrinomialTree {
 
             for (var n = num-1; n >= 0; n--) {
                 for (var k = 0; k <= n; k++) {
-                    var rt = (n == num - 1) ? rate*Math.Exp(-2*_treeVols[n]*k) : _treeRates[n, k];
+                    var rt = ((n == num - 1) ? rate : _treeRates[n]) * Math.Exp(-2 * _treeVols[n] * k);
                     newPrices[n - k] = 0.5*(oldPrices[n-k] + oldPrices[n-k+1])*Math.Exp(-rt);
                 }
                 if (n > 0) for (var k = 0; k <= n; k++) oldPrices[k] = newPrices[k];
@@ -78,8 +84,6 @@ namespace TrinomialTree {
             return newPrices[0];
         }
     }
-
-
 
     //public enum BranchingMode {
     //    Up, Mid, Down
