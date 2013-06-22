@@ -17,11 +17,7 @@ namespace TrinomialTree {
         }
     }
 
-    public interface ISolver {
-        double? Solve(Func<double, double> what, double from, double to);
-    }
-
-    public class Solver : ISolver {
+    public class Solver {
         public double? Solve(Func<double, double> what, double from, double to) {
             Debug.Assert(Math.Sign(what(from))!= Math.Sign(what(to)), "Function must be of different signs on borders");
             do {
@@ -42,6 +38,17 @@ namespace TrinomialTree {
         private readonly double[] _treeVols;
         private readonly int _n;
 
+        /// <summary>
+        /// Calculates interest rate in (i, j) node in tree
+        /// </summary>
+        /// <param name="i">number of time step</param>
+        /// <param name="j">number of point by vertical axis, j = 0 is the highest, j = i is the lowest</param>
+        /// <returns>Double value - an interest rate in (i, j) node in tree</returns>
+        public double TreeRate(int i, int j) {
+            Debug.Assert(i < _n && j < _n && j <= i, "Requested node is out of the tree");
+            return _treeRates[i]*Math.Exp(-2*_treeVols[i]*j);
+        }
+
         public BinomialTree(double[] rates, double[] vols, double[] terms = null) {
             Debug.Assert(rates.Length == vols.Length, "Count of rates and volatilities must be equal");
 
@@ -57,14 +64,18 @@ namespace TrinomialTree {
             }
             _treeRates[0] = rates[0];
 
-            ISolver solver = new Solver();
+            var solver = new Solver();
             for (var i = 1; i < _n; i++) {
                 // 1) calculating price of ZCB with term i and rate r[i]
                 var price = Math.Exp(-rates[i]*_treeTerms[i]);
+
+                var num = i; // to avoid using cycle variable in clojure
+
                 // 2) finding rate which would make bond price equal to calculated price
-                var num = i;
-                var rt = solver.Solve(rate => EvaluatePrice(rate, num+1) - price, 0.00, 1.00);
+                var rt = solver.Solve(rate => EvaluatePrice(rate, num + 1) - price, 0.00, 1.00);
                 if (rt == null) throw new InvalidOperationException("Didn't converge!");
+
+                // 3) Saving result
                 _treeRates[i] = rt.Value;
             }
         }
