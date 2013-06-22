@@ -60,26 +60,31 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-In this report I present results of my CQF Final Project. A short description of models used is provided with the reasons for selecting those particular models. I also discuss some issues arised during implementation of the project and present findings which I consider to be most significant for me. 
+When I implemented this project, my primary goal was to better understand the models and find answers to questions I couldn't answer before. Hence, I tried to avoid reproducing all formulas already provided and proven in textbooks or going into great details of well-known mathematical methods I used. At the same time I try to show which choice I had during project implementations, what decisions I made, and why.
 \end{abstract}
 
 %% ---> INTRO <--- %% 
 \section{Introduction}
+\subsection{Computational environment}
+I have chosen Matlab as a primary programming environment. The choice was determined by the unique features of Matlab: easy vector operations, lots of built-in linear algebra algorithms, and convenience of programming language itself. It supports advanced programming techniques like anonymous functions and structures with dynamic fields. It also supports OOP and code structuring via packages. Matlab allows to concentrate on the task first, and then go to details as deep as it's necessary.
 
-When I implemented this project, my primary goal was to understand the models better and answer some questions which were left unanswered (or even not formulated) during the course of study. Hence, I tried to avoid reproducing all formulas already provided and proven in textbooks or going into great details of well-known mathematical methods I used.
+Matlab also has a very convenient feature of storing data in its native ``.mat'' files, which were like Excel spreadsheets or database tables. I have once downloaded, structured and imported source data, and then stored them into .mat file, which is reloaded each time script runs.
 
-I have chosen Matlab as programming environment. The choice was determined by the unique features of Matlab: easy vector operations, lots of built-in linear algebra algorithms, convenient programming language.  Matlab allows to concentrate on the task first, and then go to details as deep as it's necessary.
+My code can be also run with Octave.
+\subsection{Choice of assignments}
+After thorough examination of the options available, I have chosen HJM Model and Static Hedge. The reason for HJM Model was to obtain hands-on experience with interest rate models, which I find essential to understand quantitative finance. Interest rate models are more complex than equity model because of incompleteness of interest rate market, and at the same time, they are good starting point for more advanced models, for example, credit risk models.
 
-Matlab also has a very convenient feature of storing data in its native ``.mat'' files, which were like Excel spreadsheets for me. I have once downloaded, structured and imported source data, and then stored them into .mat file, which is reloaded each time script is run.
+Static Hedge is was chosen for two reasons: first, I did FDM when studied in university, and second is that uncertain parameters models look very impressive because they are simple and they solve very advanced problems. Uncertain parameters approach can easily incorporate uncertain interest rate and uncertain dividends, which together with uncertain volatility covers most substantial uncertainties in pricing of contingent claims. Static hedging in this setting is essential to narrow bid-ask spread on securities, priced with uncertain parameters model.
+
 \section{HJM Model}
 
 %% === Some bad words about short-rate models === %%
 \subsection{Comparing to short-rate models}
 
-HJM model is the first interest rate model which took advantage of modelling whole yield curve instead of modelling only one point of that curve like it was in short-rate models.
+HJM model was the first interest rate model which took advantage of modelling whole yield curve instead of modelling only one point of that curve like it was in short-rate models.
 
 Why do I say ``advantage''? Generally speaking, there's nothing wrong with short-rate models, but there's something unnatural in the way they treat bond pricing and yield curve modelling. Here's what I mean.\\
-Let's take spot yield curve r(t). Instantaneous forward yield curve is then 
+Let's take spot yield curve r(t). Instantaneous forward yield curve is then % TODO REFERENCE
 \begin{equation}
 f(t) = \frac{d}{dt}(rt) = r(t) + r'(t) t
 \end{equation}
@@ -87,26 +92,26 @@ and, conversely,
 \begin{equation}
 r(t) = \frac{1}{t}\int_{0}^{t}{f(s)ds}
 \end{equation}
-Price of zero-coupon bond is
+Price of zero-coupon bond is computed very naturally, by discounting bond future (face) value by rate, corresponding to the term of the bond:
 \begin{equation} \label{eq:truebondprice}
 Z(0,T) = e^{-r(T)T} = exp\left(-T\frac{1}{T}\int_{0}^{T}{f(s)ds}\right) = exp\left(-\int_{0}^{T}{f(s)ds}\right)
 \end{equation}
 
-These formulas are very intuitive and could be used directly should we have behaviour of spot or forward yield curve modelled. But in case of short-rate models one could not do it like this. Without any understanding of yield curve movements, one has to consider ZCB to be a derivative on short rate and looking for solution of bond pricing equation in form 
+These formulas are very intuitive and could be used directly should we have behaviour of spot or forward yield curve modelled. But in case of short-rate models what we model is short rate $r(0) = r_0$ and thus it is impossible to get $r(T)$ directly. Without understanding of yield curve movements, one has to consider ZCB to be a derivative on short rate and look for solution of bond pricing equation (Black-Scholes equation for bond) in form 
 \begin{equation} 
 Z(t,T) = e^{A(t,T) r + B(t,T)}
 \end{equation}
-Comparing this equation to ``true'' bond pricing formula \eqref{eq:truebondprice}, I conclude that short-rate models approximate longer interest rate with linear function of $r$ in form $A(t,T) r + B(t,T)$. One could call it a ``first-order approximation''. Later on one could estimate full yield curve $r(t,T)$ and forward curve $f(t,T)$ from these bond prices
+Comparing this equation to ``true'' bond pricing formula \eqref{eq:truebondprice}, I conclude that short-rate models approximate longer interest rate with linear function of $r_0$ in form $A(t,T) r_0 + B(t,T)$. One could call it a ``first-order approximation''. Later on one could estimate full yield curve $r(t,T)$ and forward curve $f(t,T)$ from these bond prices
 \begin{alignat}{2}
-r(t,T) = -\frac{ln Z(t,T)}{T-t},\\
-\label{eq:fwdfrombond} f(t,T) = -\frac{d lnZ(t,T)}{dT}
+r(t,T) = -\frac{\ln Z(t,T)}{T-t},\\
+\label{eq:fwdfrombond} f(t,T) = -\frac{d \ln Z(t,T)}{dT}
 \end{alignat}
 Thus short rate models are a ``double trouble'': a headache to implement and deduce bond prices, and only a first-order approximation of true dynamics of yield curve.\\
 
 %% === Basic ideas behind HJM === %%
 \subsection{HJM setting}
 
-As I have already told before, HJM (in theory) models dynamic of whole yield curve. Or, more specifically, of an instantaneous forward yield curve.\\
+As I have already told before, HJM is a model of a whole yield curve. Or, more specifically, of an instantaneous forward yield curve.\\
 
 \cite[ch. 37]{PWoQF06} starts with premise that ZCB price follows some general lognormal random walk
 \begin{alignat}{1} \label{eq:lognrmal_bond}
@@ -138,7 +143,7 @@ where $\tau = T-t$.
 
 %% === How to discretize === %%
 \subsection{Dimensionality and dimension reduction}
-The main input into equation \eqref{eq:hjm_musiela} is $\bar{\nu}(t,\tau)$. In this model we do not simulate or forecast volatility, the volatility is constant model, and hence $\bar{\nu}(t,\tau) = \nu(\tau)$ which is known at time zero. That volatility function is an only source of randomness in SDE. Term $\bar{\nu}(t,\tau)dW_t$ means that on each step the whole yield curve will experience a shift proportional to value of $\bar{\nu}(t,\tau)$ at particular term $\tau$. At the same time the model can easily be extended so that to introduce several random walks. It takes form
+The main input into equation \eqref{eq:hjm_musiela} is $\bar{\nu}(t,\tau)$. In this model we do not simulate or forecast volatility, hence we use constant volatility model. This means that $\bar{\nu}(t,\tau) = \nu(\tau)$, which is known at time zero. That volatility function is an only source of randomness in SDE. Term $\bar{\nu}(t,\tau)dW_t$ means that on each step the whole yield curve will experience a shift proportional to value of $\bar{\nu}(t,\tau)$ at particular term $\tau$. At the same time the model can easily be extended so that to introduce several random walks. It takes form
 \begin{alignat}{1} \label{eq:hjm_musiela_multidim}
 d\bar{f}(t,\tau) = \left[\sum_{k=1}^N\bar{\nu_k}(\tau)\int_{0}^{\tau}\bar{\nu_k}(s)ds+ \frac{\partial}{\partial \tau}\bar{f}(t,\tau)\right]dt + \sum_{k=1}^N\bar{\nu_k}(\tau)dW_{t, k}\\
 \forall k = \overline{1:N} \nonumber
@@ -153,11 +158,11 @@ In this case we have simulate N correlated random walks. In appendix~\ref{ap:PCA
 
 \subsection{Implementation}
 \subsubsection{Data}
-I decided to use two sources of data. First is Bank of England yield curves, as suggested in project description and another is a set of MICEX \footnote{Major Russian exchange} OFZ\footnote{Russian domestic treasury bonds} curves. 
+I use two datasets. First is Bank of England yield curves, as suggested in project description and another is a set of MICEX \footnote{Major Russian exchange} OFZ\footnote{Russian domestic treasury bonds} curves. 
 Both datasets are stored in Matlab files: hjm\_boe\_forward.mat and hjm\_micex\_nss.mat.
 Bank of England yield curves are ready to use, and after loading hjm\_boe\_forward.mat file I obtain main variables: terms (1D array of terms of interest rates) and rates(2D array of interest rates history). 
 
-MICEX data are a bit more contrived. The data consists of a list of daily parameters of extended Nelson-Siegel-Svennson\footnote{See description at MICEX \href{http://rts.micex.ru/a80}{website}} approximation of validated and bootstrapped OFZ curves. I store this list in hjm\_micex\_nss.mat. After loading it I create my own grid of terms and evaluate rate curves at these points. Then I recalculate them into forward rates.
+MICEX data are a bit more contrived. The data consists of a list of daily parameters of extended Nelson-Siegel-Svennson\footnote{More detailed description is available on MICEX \href{http://rts.micex.ru/a80}{website}} approximation of validated and bootstrapped OFZ curves. I store this list in hjm\_micex\_nss.mat. After loading it I create my own grid of terms and evaluate rate curves at these points. Then I recalculate them into forward rates.
 
 Choice between data sources depends on SELECTED\_MODEL variable. It can take two values, BANK\_ENGLAND\_FWD and MICEX\_NSS.
 
@@ -189,37 +194,70 @@ To avoid it I implemented a non-infinitesimal short rate model as it is explaine
 One thing left unclear for me was if it is correct to use same principal components (e.g. same covariance matrix)? In non-infinitesimal model we work with m times compounded interest rates. In this case it might be correct to recalculate our interest rates into corresponding compounding and calculate covariance matrix for such rates. Recalculation is done using formula $r_m = m\left((1+r_1)^{1/m}-1\right)$. There's significant difference in principal components:\\
  \includegraphics[scale=0.4]{compounding_PCA.jpg}\\
 In this case no negative interest rates occur.
+
+\subsubsection{Fitting eigenvectors with polynomials}
+
+
+\subsubsection{Volatility structure}
 \subsection{Pricing financial instruments}
 \subsubsection{Zero-coupon bond}
 \subsubsection{Cap pricing}
 
+\subsection{Other models}
+
+\subsection{Further improvements}
+
+
 %% ---> STATIC HEDGE <--- %%
 \section{Uncertain volatility and static hedge}
 \subsection{Task description}
+Uncertain volatility model assumes volatility to be not just random, but uncertain, i.e. we do not know anything about its distribution and can rely only on its expected range. Contingent claim price is still determined by Black-Scholes equation, but instead of constant volatility this equation now uses the most undesirable variable of volatility from that range. This means that instead of constant $\sigma$ equation contains $\sigma = \sigma(\Gamma)$, which definition depends on whether option is long or short. For more details I refer to \cite[ch. 52 and 60]{PWoQF06}.
+
+So the task basically consist of two major parts. First is to solve non-linear bond pricing equation (as described above) and the second is to solve optimization problem. The goal of the second part is to find combination of our option being priced with other traded instruments, which (combination) will have least residual cost. 
+
+Optimization doesn't make sense for linear pricing models, because in linear pack of options cost is exactly the same as the sum of their prices. That's not the case for non-linear models. One can create a pack, which will contain some non-traded exotic option and number of traded vanilla options. Then he or she will try to solve optimization problem: $[\lambda_1, ..., \lambda_N] = \underset{[\lambda_1, ..., \lambda_N]\in \mathbf{R}^N}{\arg \min} \left[\text{Price}\left(\text{Exotic} + \sum_{i=1}^{N}\lambda_i \text{Vanilla}_i\right) - \sum_{i=1}^N\lambda_i\text{Price}\left(\text{Vanilla}_i\right) \right]$.
+
+Application of static hedge allows to narrow bid-ask spread on exotic product, which price is calculated using uncertain parameters model.
 
 \subsection{Pricing}
-Price of derivatives in question can be found as a solution of Black-Scholes PDE, which  takes form of:
+Price of derivatives in question can be found as a solution of Black-Scholes PDE, which takes form of:
 \begin{equation}
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} +rS\frac{\partial V}{\partial S} - rV = 0
 \end{equation}
-Discretization of this equation requires us to introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_i = i\delta t, i = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_k = k\delta s, k = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
-\includegraphics[scale=0.4]{FDM-1.png}\\
-Implicit FDM approximation at point $(i,k)$ is the following:
+Discretization of this equation requires us to introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_k = k\delta t, k = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_i = i\delta s, i = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
+
+I will use the following symbols for difference operations:
+\begin{itemize}
+	\item Right first-order derivative: $V_x =\frac{V_{i+1}-V_i}{h}$
+	\item Left first-order derivative: $V_{\overline{x}} =\frac{V_{i}-V_{i-1}}{h}$
+	\item Central first-order derivative: $V_{\mathring{x}} =\frac{V_{i+1}-V_{i-1}}{2h}$
+	\item Second order derivative $V_{x\overline{x}} = \left(\frac{V_{i+1}-V_i}{h} - \frac{V_{i}-V_{i-1}}{h}\right)/h = \frac{V_{i+1}-2V_{i}+V_{i-1}}{h^2}$
+\end{itemize}
+Finite difference approximation of BS equation at point $(i,k)$ is the following:
 \begin{equation}
 V_t + \sigma^2 S_i^2 V_{\overline{x}x} + r S_i V_{\mathring{x}} + rV_i = 0
 \end{equation}
-Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and its convergence.
+If last three terms of previous equation are taken at time step $k$, the scheme is explicit, and when $k+1$ is used, the scheme is implicit.
 
-I will use two most widely-used approaches - explicit and implicit methods. 
+\includegraphics[scale=0.5]{schemes.png}\\ 
 
 \subsection{Optimization}
+It is a part of 
+
 
 \subsection{Finite-difference method}
+Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and its convergence.
 
 \subsection{Optimization}
 
 \subsection{Results}
-
+\subsection{Further improvements}
+ - American options\\
+ - Barrier options\\
+ - Uncertain interest rate\\
+ - Better schemes with improved convergence\\
+ - Irregular grids
+ 
 %% ---> APPENDICES <--- %%
 \appendix
 
@@ -232,7 +270,7 @@ Any matrix is simply a linear transformation in multidimensional vector space. I
 Let us suppose we have a covariance matrix $\Omega \in R^{N \times N}$ and vector of i.i.d. standard normal random variables $\eta \in R^N$. It is known that for any covariance matrix there exist self-adjoint matrices $U, \Lambda \in R^{N \times N}$ where $U$ contains columns of eigenvectors and $\Lambda \text{ = } diag(\lambda_1, ..., \lambda_N)$ - eigenvalues of matrix $\Omega$. The eigenvalues are non-negative due to nature of covariance matrix.
 
 
-\subsection{Generating correlated random walks using eigenvalue decomposition}
+\subsection{Generating correlated random walks using eigenvalcommunityue decomposition}
 I will start with vector $\eta = (\eta_1, ..., \eta_N)$ of i.i.d standard normal random variables. My goal is to obtain vector $\xi$ of correlated standard normal random variables. Desired correlation structure is described by covariance matrix $\Omega$.
 
 Eigenvalue decomposition of covariance matrix is $\Omega = U \Lambda U^T = \left(U\sqrt{\Lambda}\right) \left(U\sqrt{\Lambda}\right)^T$. Let $\xi =\euley$. In such case
@@ -314,5 +352,10 @@ Example of approximation of eigenvectors with $3^{rd}$ order polynomials below:\
 \bibitem{PWoQF06} Paul Wilmott, \emph{Paul Wilmott on Quantitative Finance}, 2nd Edition, 2006.
 \bibitem{Shreve08} Steven E. Shreve, \emph{Stochastic Calculus for Finance}, 2nd Edition, 2008.
 \bibitem{Hastie10} Trevor Hastie, \emph{The Elements of Statistical Learning}, 2nd Edition, 2010.
+\bibitem{Hull03} John C. Hull, \emph{Options, Futures and Other Derivatives}, 5th Edition, 2003.
+\bibitem{Yuh02} Yuh-Dauh Lyuu, \emph{Financial Engineering and Computation}, 2002.
+\bibitem{BrigoMercurio06} Damiano Brigo, Fabio Mercurio, \emph{Interest Rate Models - Theory and Practice}, 2nd Edition, 2006.
+\bibitem{JacksonStaunton02} Mary Jackson, Mike Staunton, \emph{Advanced Modelling in Finance using Excel and VBA}, 2002.
+\bibitem{NumRecepies07} William H. Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery,  \emph{Numerical Recepies}, 3rd Edition, 2007.
 \end{thebibliography}
 \end{document}
