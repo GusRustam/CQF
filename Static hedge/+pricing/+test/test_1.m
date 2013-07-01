@@ -4,7 +4,7 @@ clear variables
 import enums.*
 import pricing.*
 import pricing.blackscholes.*
-import pricing.test.plot_three_cases
+import pricing.test.*
 
 Pack.Options(1).Kind = OptionKind.Digital;
 Pack.Options(1).Type = OptionType.Call;
@@ -55,7 +55,7 @@ Pack.Asset.VolatilityModel = VolatilityModel.Uncertain;
 [~, uncertain] = PriceOption(Pack.Options(1), Pack.Asset, Pack.RFR, Method, 100, 200);
 uncertain = uncertain(:,1);
 
-plot_three_cases([certain_min, certain_max, uncertain]);
+plotXXX([certain_min, certain_max, uncertain]);
 pause
 close all
 

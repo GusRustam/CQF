@@ -70,11 +70,12 @@ I have chosen Matlab as a primary programming environment. The choice was determ
 
 Matlab also has a very convenient feature of storing data in its native ``.mat'' files, which were like Excel spreadsheets or database tables. I have once downloaded, structured and imported source data, and then stored them into .mat file, which is reloaded each time script runs.
 
-My code can be also run with Octave.
+My code can be also run with Octave. % Проверено на такой-то версии и все такое.
+
 \subsection{Choice of assignments}
 After thorough examination of the options available, I have chosen HJM Model and Static Hedge. The reason for HJM Model was to obtain hands-on experience with interest rate models, which I find essential to understand quantitative finance. Interest rate models are more complex than equity model because of incompleteness of interest rate market, and at the same time, they are good starting point for more advanced models, for example, credit risk models.
 
-Static Hedge is was chosen for two reasons: first, I did FDM when studied in university, and second is that uncertain parameters models look very impressive because they are simple and they solve very advanced problems. Uncertain parameters approach can easily incorporate uncertain interest rate and uncertain dividends, which together with uncertain volatility covers most substantial uncertainties in pricing of contingent claims. Static hedging in this setting is essential to narrow bid-ask spread on securities, priced with uncertain parameters model.
+Static Hedge is was chosen for two reasons: first, I did FDM when studied in university, and second is that uncertain parameters models look very impressive, they are simple and able to solve very advanced problems. Uncertain parameters approach can easily incorporate uncertain interest rate and uncertain dividends, which together with uncertain volatility covers most substantial uncertainties in pricing of contingent claims. Static hedging in this setting is essential to narrow bid-ask spread on securities, priced with uncertain parameters model.
 
 \section{HJM Model}
 
@@ -106,7 +107,7 @@ Comparing this equation to ``true'' bond pricing formula \eqref{eq:truebondprice
 r(t,T) = -\frac{\ln Z(t,T)}{T-t},\\
 \label{eq:fwdfrombond} f(t,T) = -\frac{d \ln Z(t,T)}{dT}
 \end{alignat}
-Thus short rate models are a ``double trouble'': a headache to implement and deduce bond prices, and only a first-order approximation of true dynamics of yield curve.\\
+Thus short rate models are a ``double trouble'': a headache to implement and deduce bond prices, and only a first-order approximation of true dynamics of yield curve. The latter shortcoming can be overcome by using multidimensional model, but for the cost of significant increase of model's complexity.\\
 
 %% === Basic ideas behind HJM === %%
 \subsection{HJM setting}
@@ -158,6 +159,7 @@ In this case we have simulate N correlated random walks. In appendix~\ref{ap:PCA
 
 \subsection{Implementation}
 \subsubsection{Data}
+% TODO MOVE IT IN CODE DESCRIPTION SECTION
 I use two datasets. First is Bank of England yield curves, as suggested in project description and another is a set of MICEX \footnote{Major Russian exchange} OFZ\footnote{Russian domestic treasury bonds} curves. 
 Both datasets are stored in Matlab files: hjm\_boe\_forward.mat and hjm\_micex\_nss.mat.
 Bank of England yield curves are ready to use, and after loading hjm\_boe\_forward.mat file I obtain main variables: terms (1D array of terms of interest rates) and rates(2D array of interest rates history). 
@@ -166,20 +168,20 @@ MICEX data are a bit more contrived. The data consists of a list of daily parame
 
 Choice between data sources depends on SELECTED\_MODEL variable. It can take two values, BANK\_ENGLAND\_FWD and MICEX\_NSS.
 
-\subsubsection{Discretization}
+\subsubsection{Discretisation}
 In order to simulate equation \eqref{eq:hjm_musiela_multidim}, we have to replace it with its discrete version. First I will discretize it by $t$. Time $t$ starts at zero and has step of arbitrary fixed length $\delta t$.
 \begin{equation}
 \bar{f}_i(\tau) - \bar{f}_{i-1}(\tau) = \left[\sum_{k=1}^N\bar{\nu_k}(\tau)\int_{0}^{\tau}\bar{\nu_k}(s)ds+ \frac{\partial}{\partial \tau}\bar{f}_{i-1}(\tau)\right]\delta t + \sum_{k=1}^N\bar{\nu_k}(\tau)\delta W_{k}
 \end{equation}
 Here $N$ is number of principal components, and $i$ ranges from $1$ to artbitrary chosen period of time.
 
-Next step is discretization by terms $\tau$. In my case it is either done exogenously (Bank of England data are already discretized by the Bank by terms) or I could do it myself. This means I have a system of $M$ equations, there $M$ is number of points on term grid.
+Next step is discretisation by terms $\tau$. In my case it is either done exogenously (Bank of England data are already discretised by the Bank by terms) or I could do it myself. This means I have a system of $M$ equations, there $M$ is number of points on term grid.
 \begin{equation} \label{eq:hjm_musiela_multidim_discrete}
 \bar{f}_i^j - \bar{f}_{i-1}^j = \left[\sum_{k=1}^N\bar{\nu_k}(\tau_j)\int_{0}^{\tau_j}\bar{\nu_k}(s)ds+ \frac{\bar{f}_{i-1}^j-\bar{f}_{i-1}^{j-1}}{\delta\tau_j}\right]\delta t + \sum_{k=1}^N\bar{\nu_k}(\tau_j)\delta W_{k}
 \end{equation}
 where $j = \overline{1:M}$ and $\delta\tau_j = \tau_j - \tau_{j-1}$ is a length of $j^{th}$ term grid step. 
 
-The only undiscretized thing here is integral $\int_{0}^{\tau_j}\bar{\nu_k}(s)ds$. $\bar{\nu}(\tau)$ is a function with known values on grid points. Hence we can easily do a numerical integration using, for example, standard trapezoid rule:
+The only undiscretised thing here is integral $\int_{0}^{\tau_j}\bar{\nu_k}(s)ds$. $\bar{\nu}(\tau)$ is a function with known values on grid points. Hence we can easily do a numerical integration using, for example, standard trapezoid rule:
 \begin{equation}
 \int_{0}^{\tau_j}\bar{\nu_k}(s)ds = \sum_{i=1}^{j-1}\frac{\bar{\nu_k(\tau_i)}+\bar{\nu_k(\tau_{i+1})}}{2}\delta\tau_i
 \end{equation}
@@ -192,18 +194,30 @@ The last issue I wanted to discuss is volatility structure. In \cite[par. 37.15]
 To avoid it I implemented a non-infinitesimal short rate model as it is explained in there. In order to switch from standard to non-infinitesimal model it is necessary to set variable LOGNORMAL from $0$ to $1$.
 
 One thing left unclear for me was if it is correct to use same principal components (e.g. same covariance matrix)? In non-infinitesimal model we work with m times compounded interest rates. In this case it might be correct to recalculate our interest rates into corresponding compounding and calculate covariance matrix for such rates. Recalculation is done using formula $r_m = m\left((1+r_1)^{1/m}-1\right)$. There's significant difference in principal components:\\
- \includegraphics[scale=0.4]{compounding_PCA.jpg}\\
+\includegraphics[scale=0.4]{compounding_PCA.jpg}\\
 In this case no negative interest rates occur.
 
 \subsubsection{Fitting eigenvectors with polynomials}
+In the lectures it was told that it is necessary to substitute eigenvectors with their polynomial approximation. The reason was that polynomial function is smooth and with these functions simulation would give better results.
 
+I tried both approximated and raw vectors and I must say that I found no significant difference in model behaviour.
 
-\subsubsection{Volatility structure}
 \subsection{Pricing financial instruments}
+
 \subsubsection{Zero-coupon bond}
+
 \subsubsection{Cap pricing}
 
 \subsection{Other models}
+%В данном задании меня очень беспокоил вопрос валидации результатов моделирования. Наиболее просто было бы сравнить мои результаты с результатами работы аналогичной модели, но уже разработанной и проверенной. К сожалению, я не нашел доступной реализации именно такой версии HJM. Такая реализация есть в Матлабе, но у меня, к сожалению, нет доступа к пакету Financial Derivatives.
+
+%Поэтому я попытался найти модель другого типа, которая обладала бы схожими свойствами. Наша версия HJM обладает следующими свойствами: во-первых, мы калибруем ее на историю (причем с учетом корреляционной структуры волатильности исторических ставок), и, во-вторых, она моделирует динамику всей кривой доходности. LMM - очевидный конкурент, но, аналогично, простой и внятной, проверенной и бесплатной версии я не нашел.
+
+%Сначала я пытался найти аналоги среди моделей короткой ставки, и начал с самых простых, т.е. Васичек и CIR. Сразу же стало понятно, что мне в принципе непонятно, как с такими моделями работать, как их калибровать на историю и на рынок. Калибровка на историю прекрасно описана в статье Tijs Van der Berg (рекомендую!) а вот калибровку на рынок в результате пришлось делать самостоятельно. Все, на самом деле, оказалось довольно просто - достаточно взять формулу кривой доходности в соответствующей модели и подобрать все параметры так, чтобы она наиболее точно соответствовала рыночной кривой доходности.
+
+%Вот вам пожалуйста, оценки по Васичеку и CIR.
+
+%После того, как я понял, как применять самые простые модели, стало понятно, что оценка стоимости деривавтивов, которую они дадут, не будет сравнима с результатами работы HJM.
 
 \subsection{Further improvements}
 
@@ -219,12 +233,23 @@ Optimization doesn't make sense for linear pricing models, because in linear pac
 
 Application of static hedge allows to narrow bid-ask spread on exotic product, which price is calculated using uncertain parameters model.
 
-\subsection{Pricing}
+% Данное задание состояло из двух основных частей - разностная схема и оптимизация.
+So, this task consists of two major parts, implementation of finite-difference scheme, and optimization. I will address these issues in the sections below.
+
+\subsection{Finite-difference method for single option}
 Price of derivatives in question can be found as a solution of Black-Scholes PDE, which takes form of:
 \begin{equation}
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} +rS\frac{\partial V}{\partial S} - rV = 0
 \end{equation}
-Discretization of this equation requires us to introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_k = k\delta t, k = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_i = i\delta s, i = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
+
+% Первой частью данной задачи является построение разностной схемы, позволяющей решить уравнение Блэка-Шоулза с заданными граничными условиями.
+This means that in the first part of this task we have to develop an FDM which solves BS equation with necessary boundary conditions. 
+
+Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and convergence of a numerical method.
+
+First off, let's introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_k = k\delta t, k = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_i = i\delta s, i = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
+
+Later on I will denote time step $\delta t$ as $\tau$ and asset price step $\delta s$ as $h$.
 
 I will use the following symbols for difference operations:
 \begin{itemize}
@@ -233,44 +258,80 @@ I will use the following symbols for difference operations:
 	\item Central first-order derivative: $V_{\mathring{x}} =\frac{V_{i+1}-V_{i-1}}{2h}$
 	\item Second order derivative $V_{x\overline{x}} = \left(\frac{V_{i+1}-V_i}{h} - \frac{V_{i}-V_{i-1}}{h}\right)/h = \frac{V_{i+1}-2V_{i}+V_{i-1}}{h^2}$
 \end{itemize}
-Finite difference approximation of BS equation at point $(i,k)$ is the following:
+
+Finite difference approximation of BS equation at point $i$ is the following:
 \begin{equation}
 V_t + \sigma^2 S_i^2 V_{\overline{x}x} + r S_i V_{\mathring{x}} + rV_i = 0
 \end{equation}
-If last three terms of previous equation are taken at time step $k$, the scheme is explicit, and when $k+1$ is used, the scheme is implicit.
+
+This scheme has second order of accuracy w.r.t $s$ and first order w.r.t $t$, or $O(\delta t, \delta s^2)$.
+
+% Я построил две разностные схемы - для явного и неявного метода.
+If last three terms of previous equation are taken at time step $k$, the scheme is explicit, and when $k+1$ is used, the scheme is implicit. These schemes are plotted on the figure below.
 
 \includegraphics[scale=0.5]{schemes.png}\\ 
 
+\subsubsection{Boundary conditions}
+\begin{description}
+\item[Payoff condition ($t = T, \forall s$)] depends on the option in question. In either case it is simply a value of payoff function, calculated in grid points.
+\item[Minimum asset price ($s = 0, \forall t$)]. One possible way of treating lower boundary is to analyse option price behaviour at the lower bound depending on the type of the option. For example, call option price tends to zero when asset price tends to zero. However vanilla put price in same circumstances tends to strike price. This means, I'd have to build boundary conditions manually depending on type of the option.
+
+In book \cite[ch. ????]{PWoQF06} it was proposed a better boundary condition: take value at end point equal to linear projection of the values in two previous points, i.e. $V_0 = 2V_1 - V_2$. First, it makes sense from financial point of view, because conventional options exhibit linear behaviour on far bounds. Second, this approximation is of second order of accuracy by $s$:
+
+$V_1 = V_0 + h V_0' + \frac{h^2}{2}V_0'' + O(h^3)$ and \\
+$V_2 = V_0 + 2h V_0' + \frac{(2h)^2}{2}V_0'' + O(h^3)$ and hence \\
+$2V_1 - V_2 = 2V_0 + 2h V_0' + h^2 V_0'' - V_0 - 2h V_0' - 2h^2V_0'' + O(h^3) = V_0 + O(h^2)$.
+
+Moreover, such approximation is very convenient when it comes to pricing of a pack of the options. 
+
+\item[Payoff condition ($s \to +\infty, \forall t$)]. In this case everything told about lower boundary condition is still correct, and thus, similar condition can be used. In this case it would look like $V_N = 2V_{N-1} - V_{N-2}$. The only thing to mention is that we are, of course, unable to stretch the grid up to positive infinity and hence we will have to use some large value of asset price instead. In literature it is told that $S_{max} = 2 \cdot \text{Strike}$ would be enough.  %С учетом вышеизложенного, наверху применяется аналогичная схема. При этом бесконечностью считается удвоенная текущая стоимость актива (хорошо ли это?)
+\end{description}
+
+\subsubsection{Scheme formulas}
+
+\subsubsection{Non-linear gamma case}
+
+\subsection{Finite-difference method for pack of options}
+% Тут надо решить две задачи. Первое - корректно нанести все на единую сетку
+
+\subsection{Stability and convergence}
+
 \subsection{Optimization}
-It is a part of 
+% Второй из поставленных задач было написание программы, осуществляющей поиск минимального значения заданой функции. Как было рекомендовано, я использовал метод симлексного спуска согласно описанию из книги (ссылка). Я просто перевел его на Матлаб. 
 
+% Я также нашел реализацию алгоритма Метрополиса (метод симуляции отжига), однако, в данном случае этот алгоритм не применялся, поскольку оптимизируемая функция достаточно гладкая. КАРТИНКА.
 
-\subsection{Finite-difference method}
-Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and its convergence.
-
-\subsection{Optimization}
+% В теории, возможно было бы применить один из методов градиетного спуска, поскольку FDM отлично приспособлен для вычисления тау и дельты. На практике мне этого не потребовалось, поскольку скорость схождения была приемлемой, а качественная реализация градиентного спуска - задача очень непростая. 
 
 \subsection{Results}
+
+% Прежде всего, покажу, как себя ведет модель неопределенной волатильности по сравнению с обычной.
+
+% В случае, когда используется только два хеджирующих опциона, становится возможным визуализировать процесс вычислений.
+
+% Потом, можно показать, как улучшаются показатели хеджа при увеличении числа опционов.
+
 \subsection{Further improvements}
  - American options\\
  - Barrier options\\
+ - Ratchet options\\
  - Uncertain interest rate\\
  - Better schemes with improved convergence\\
  - Irregular grids
  
 %% ---> APPENDICES <--- %%
 \appendix
-
 %% === Principal component analysis === %%
 \section{PCA and simulation of correlated random walks}
 \label{ap:PCA}
 
-Any matrix is simply a linear transformation in multidimensional vector space. It is well known that any matrix can be decomposed into set of rotations, shifts and scalings. \\
+Any matrix is simply a linear transformation in multidimensional vector space. It is well known that any matrix can be decomposed into set of rotations, shifts and scalings. % Так называемое ??? разложение
+\\
 
 Let us suppose we have a covariance matrix $\Omega \in R^{N \times N}$ and vector of i.i.d. standard normal random variables $\eta \in R^N$. It is known that for any covariance matrix there exist self-adjoint matrices $U, \Lambda \in R^{N \times N}$ where $U$ contains columns of eigenvectors and $\Lambda \text{ = } diag(\lambda_1, ..., \lambda_N)$ - eigenvalues of matrix $\Omega$. The eigenvalues are non-negative due to nature of covariance matrix.
 
 
-\subsection{Generating correlated random walks using eigenvalcommunityue decomposition}
+\subsection{Generating correlated random walks using eigenvalue decomposition}
 I will start with vector $\eta = (\eta_1, ..., \eta_N)$ of i.i.d standard normal random variables. My goal is to obtain vector $\xi$ of correlated standard normal random variables. Desired correlation structure is described by covariance matrix $\Omega$.
 
 Eigenvalue decomposition of covariance matrix is $\Omega = U \Lambda U^T = \left(U\sqrt{\Lambda}\right) \left(U\sqrt{\Lambda}\right)^T$. Let $\xi =\euley$. In such case
@@ -357,5 +418,7 @@ Example of approximation of eigenvectors with $3^{rd}$ order polynomials below:\
 \bibitem{BrigoMercurio06} Damiano Brigo, Fabio Mercurio, \emph{Interest Rate Models - Theory and Practice}, 2nd Edition, 2006.
 \bibitem{JacksonStaunton02} Mary Jackson, Mike Staunton, \emph{Advanced Modelling in Finance using Excel and VBA}, 2002.
 \bibitem{NumRecepies07} William H. Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery,  \emph{Numerical Recepies}, 3rd Edition, 2007.
+\bibitem{Duffy06} Daniel J. Duffy,  \emph{Finite Difference Methods in Financial Engineering}, 2006.
+
 \end{thebibliography}
 \end{document}
