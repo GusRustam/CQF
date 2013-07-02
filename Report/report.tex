@@ -294,14 +294,30 @@ Moreover, such approximation is very convenient when it comes to pricing of a pa
 \subsection{Finite-difference method for pack of options}
 % Тут надо решить две задачи. Первое - корректно нанести все на единую сетку
 
-\subsection{Stability and convergence}
+\subsection{Stability and convergence condition}
+In \cite[ch. ????]{PWoQF06} it has been shown that in order for explicit scheme to converge, it is necessary that the following condition was held: $\tau \leq \frac{h^2}{\sigma^2}$. The implicit scheme is unconditionally convergent. 
+
+There are interesting analogy between explicit scheme and trinomial tree model in \cite[ch. ???]{Hull03}. Since value at particular point on next time step is calculated as a weighted average of values of three sibling points on previous time step, the weight could be considered to be the probabilities of up, down and straight asset price movements. This argument gives two interesting consequences: first, it seems to be rightful to require these probabilities to be non-negative and add up to one. And solving three equations (TODO) we immediately obtain the same stability condition (TODO)! 
+
+Another interesting consequence is that it is not really necessary\footnote{While it is not really necessary indeed, I still did the calculations on the whole grid. First, we do FDM here, not the tree. And second thing was that I wanted to see whole price surface, not the value in a single point} to do the calculations in each and every point of the grid! It would be enough to calculate along the trinomial tree (cone), that converges to the point with coordinates $(S_0, 0)$, i.e. the one that gives the value of the option at time zero and at asset price equal to current spot.
+
+\includegraphics[scale=0.5]{convergent-tree.png}\\
+In the figure above circled points are those where calculations are not necessary. Number of points on time axis is enough for scheme to converge to option value at current strike. 
+
+And, finally, this gives another great interpretation and justification of stability condition for explicit scheme: time step must be small enough to ensure that there fits a convergent cone into our grid. As an example here's a figure below where there's too few points on time axis for scheme to converge.
+
+\includegraphics[scale=0.5]{non-convergent-tree.png}\\
 
 \subsection{Optimization}
 % Второй из поставленных задач было написание программы, осуществляющей поиск минимального значения заданой функции. Как было рекомендовано, я использовал метод симлексного спуска согласно описанию из книги (ссылка). Я просто перевел его на Матлаб. 
 
-% Я также нашел реализацию алгоритма Метрополиса (метод симуляции отжига), однако, в данном случае этот алгоритм не применялся, поскольку оптимизируемая функция достаточно гладкая. КАРТИНКА.
+Another task was to develop an optimization procedure so that to find optimal hedge. According to recommendations I implemented downhill simplex method following the \cite[\S 10.5]{JacksonStaunton02}. 
 
-% В теории, возможно было бы применить один из методов градиетного спуска, поскольку FDM отлично приспособлен для вычисления тау и дельты. На практике мне этого не потребовалось, поскольку скорость схождения была приемлемой, а качественная реализация градиентного спуска - задача очень непростая. 
+% Я также нашел реализацию алгоритма Метрополиса (метод симуляции отжига), однако, в данном случае этот алгоритм не применялся, поскольку оптимизируемая функция достаточно гладкая. КАРТИНКА.
+I remember it was suggested that we could employ simulated annealing methods, but in this case it was of no need, because the function in question is smooth and has no local optima.
+
+% В теории, возможно было бы применить один из методов градиетного спуска, поскольку FDM отлично приспособлен для вычисления тау и дельты. На практике мне этого не потребовалось, поскольку скорость схождения была приемлемой, а качественная реализация градиентного спуска - задача очень непростая.
+In theory, we could also try using some kind of gradient descent, since FDM is well suited to calculate option price derivatives (greeks $\tau$ and $\Delta$). In practice I found simplex method to be fast enough, and good gradient descent is rather complex to implement.
 
 \subsection{Results}
 
@@ -314,7 +330,7 @@ Moreover, such approximation is very convenient when it comes to pricing of a pa
 \subsection{Further improvements}
  - American options\\
  - Barrier options\\
- - Ratchet options\\
+ - Forward-start \ Ratchet options\\
  - Uncertain interest rate\\
  - Better schemes with improved convergence\\
  - Irregular grids
