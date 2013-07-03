@@ -65,17 +65,17 @@ When I implemented this project, my primary goal was to better understand the mo
 
 %% ---> INTRO <--- %% 
 \section{Introduction}
+\subsection{Choice of assignments}
+After thorough examination of the tasks available, I have chosen HJM Model and Static Hedge. The reason for HJM Model was to obtain hands-on experience with interest rate models, which I find essential to understand quantitative finance. Interest rate models are more complex than equity model because of incompleteness of interest rate market, and at the same time, they are good starting point for more advanced models, for example, credit risk models.
+
+Static Hedge is was chosen for two reasons: first, I did FDM when studied in university, and second is that uncertain parameters models look very impressive, they are simple and able to solve very advanced problems. Uncertain parameters approach can easily incorporate uncertain interest rate and uncertain dividends, which together with uncertain volatility covers most substantial uncertainties in pricing of contingent claims. Static hedging in this setting is essential to narrow bid-ask spread on securities, priced with uncertain parameters model.
+
 \subsection{Computational environment}
 I have chosen Matlab as a primary programming environment. The choice was determined by the unique features of Matlab: easy vector operations, lots of built-in linear algebra algorithms, and convenience of programming language itself. It supports advanced programming techniques like anonymous functions and structures with dynamic fields. It also supports OOP and code structuring via packages. Matlab allows to concentrate on the task first, and then go to details as deep as it's necessary.
 
 Matlab also has a very convenient feature of storing data in its native ``.mat'' files, which were like Excel spreadsheets or database tables. I have once downloaded, structured and imported source data, and then stored them into .mat file, which is reloaded each time script runs.
 
 My code can be also run with Octave. % Проверено на такой-то версии и все такое.
-
-\subsection{Choice of assignments}
-After thorough examination of the options available, I have chosen HJM Model and Static Hedge. The reason for HJM Model was to obtain hands-on experience with interest rate models, which I find essential to understand quantitative finance. Interest rate models are more complex than equity model because of incompleteness of interest rate market, and at the same time, they are good starting point for more advanced models, for example, credit risk models.
-
-Static Hedge is was chosen for two reasons: first, I did FDM when studied in university, and second is that uncertain parameters models look very impressive, they are simple and able to solve very advanced problems. Uncertain parameters approach can easily incorporate uncertain interest rate and uncertain dividends, which together with uncertain volatility covers most substantial uncertainties in pricing of contingent claims. Static hedging in this setting is essential to narrow bid-ask spread on securities, priced with uncertain parameters model.
 
 \section{HJM Model}
 
@@ -93,12 +93,12 @@ and, conversely,
 \begin{equation}
 r(t) = \frac{1}{t}\int_{0}^{t}{f(s)ds}
 \end{equation}
-Price of zero-coupon bond is computed very naturally, by discounting bond future (face) value by rate, corresponding to the term of the bond:
+Price of zero-coupon bond is computed very naturally, by simple discounting bond future (face) value by rate, corresponding to the term of the bond:
 \begin{equation} \label{eq:truebondprice}
-Z(0,T) = e^{-r(T)T} = exp\left(-T\frac{1}{T}\int_{0}^{T}{f(s)ds}\right) = exp\left(-\int_{0}^{T}{f(s)ds}\right)
+Z(0,T) = e^{-r(T)T} = \exp\left(-T\frac{1}{T}\int_{0}^{T}{f(s)ds}\right) = \exp\left(-\int_{0}^{T}{f(s)ds}\right)
 \end{equation}
 
-These formulas are very intuitive and could be used directly should we have behaviour of spot or forward yield curve modelled. But in case of short-rate models what we model is short rate $r(0) = r_0$ and thus it is impossible to get $r(T)$ directly. Without understanding of yield curve movements, one has to consider ZCB to be a derivative on short rate and look for solution of bond pricing equation (Black-Scholes equation for bond) in form 
+These formulas are very intuitive and could be used directly should we have behaviour of spot or forward yield curve modelled. But in case of short-rate models what we model is short rate $r(0) = r_0$ and thus it is impossible to get $r(T)$ directly. Without understanding of yield curve movements, one has to consider ZCB to be a derivative on a short rate and look for solution of bond pricing equation (Black-Scholes equation for a bond) in form 
 \begin{equation} 
 Z(t,T) = e^{A(t,T) r + B(t,T)}
 \end{equation}
@@ -112,7 +112,7 @@ Thus short rate models are a ``double trouble'': a headache to implement and ded
 %% === Basic ideas behind HJM === %%
 \subsection{HJM setting}
 
-As I have already told before, HJM is a model of a whole yield curve. Or, more specifically, of an instantaneous forward yield curve.\\
+As I have already told before, HJM is a model of a whole yield curve. Or, more specifically, a model of an instantaneous forward yield curve.\\
 
 \cite[ch. 37]{PWoQF06} starts with premise that ZCB price follows some general lognormal random walk
 \begin{alignat}{1} \label{eq:lognrmal_bond}
@@ -123,11 +123,11 @@ Integrating  \eqref{eq:lognrmal_bond} into
 \begin{equation}
 lnZ(t,T) = \left(\mu(t,T)-  \frac{1}{2}\sigma^2(t,T)\right)t +\sigma(t,T)W_{t}
 \end{equation}
-and substituting into \eqref{eq:fwdfrombond} he obtains
+and substituting into \eqref{eq:fwdfrombond} we obtain
 \begin{equation}
 f(t,T) = \frac{\partial}{\partial T}\left(\frac{1}{2}\sigma ^2(t,T) - \mu(t,T)\right) t-\frac{\partial}{\partial T}\sigma(t,T)W_{t}
 \end{equation}
-It can be shown (\cite[par. 10.3.2]{Shreve08} for example) that in risk-free case $\mu(t,T) = r(t)$. Thus 
+It can be shown (\cite[par. 10.3.2]{Shreve08} for example) that in risk-free case $\mu(t,T) = r(t)$. This means that $\frac{\partial}{\partial T} \mu(t,T) = 0$ and thus 
 \begin{equation}
 f(t,T) = \sigma(t,T)\frac{\partial \sigma(t,T)}{\partial T}t-\frac{\partial}{\partial T}\sigma(t,T)W_{t}
 \end{equation}
@@ -151,9 +151,9 @@ d\bar{f}(t,\tau) = \left[\sum_{k=1}^N\bar{\nu_k}(\tau)\int_{0}^{\tau}\bar{\nu_k}
 \end{alignat}
 where $N$ is number of components.
 
-We calibrate the model to the historical data, so we can easily estimate interest rates covariance matrix $\Omega$. Let us suppose we have history on $N$ interest rates of different terms. In this case covariation matrix components are determined by $(\Omega)_{ij} = \rho_{ij}\sigma_{i}\sigma_{j}$ and $\Omega \in R^{N \times N}$, where $\rho_{ij} = corr(r_i,r_j)$ - correlation of $i^{th}$ and $j^{th}$ interest rates and $\sigma_i$ is standard deviation of $i^{th}$ rate.
+We calibrate the model to the historical data, so we can easily estimate interest rates covariance matrix $\Omega$. Let us suppose we have history on $N$ interest rates of different terms. In this case covariance matrix components are determined by $(\Omega)_{ij} = \rho_{ij}\sigma_{i}\sigma_{j}$ and $\Omega \in R^{N \times N}$, where $\rho_{ij} = corr(r_i,r_j)$ - correlation of $i^{th}$ and $j^{th}$ interest rates and $\sigma_i$ is standard deviation of $i^{th}$ rate.
 
-In this case we have simulate N correlated random walks. In appendix~\ref{ap:PCA} it is shown that there's an easy way to reduce number of random walks by extracting principal components.
+In this case we have simulate N factors, one for each term. This means we need N correlated random walks. In appendix~\ref{ap:PCA} it is shown that there's an easy way to reduce number of random walks by extracting principal components.
 
 %% === How to simulate === %%
 
@@ -188,12 +188,12 @@ The only undiscretised thing here is integral $\int_{0}^{\tau_j}\bar{\nu_k}(s)ds
 
 Another approach is to use approximated principal components. In this case integration is performed as described in appendix~\ref{ap:Polynom}
 
-\subsubsection{Volatility structure}
+\subsubsection{Few more words on volatility}
 The last issue I wanted to discuss is volatility structure. In \cite[par. 37.15]{PWoQF06} it is told that standard HJM model might give negative interest rates. That was exactly what I have gotten, and it was a bit irritating. 
 
 To avoid it I implemented a non-infinitesimal short rate model as it is explained in there. In order to switch from standard to non-infinitesimal model it is necessary to set variable LOGNORMAL from $0$ to $1$.
 
-One thing left unclear for me was if it is correct to use same principal components (e.g. same covariance matrix)? In non-infinitesimal model we work with m times compounded interest rates. In this case it might be correct to recalculate our interest rates into corresponding compounding and calculate covariance matrix for such rates. Recalculation is done using formula $r_m = m\left((1+r_1)^{1/m}-1\right)$. There's significant difference in principal components:\\
+In non-infinitesimal model we work with m times compounded interest rates. In this case it might be correct to recalculate our interest rates into corresponding compounding and calculate covariance matrix for such rates. Recalculation is done using formula $r_m = m\left((1+r_1)^{1/m}-1\right)$. There's significant difference in principal components:\\
 \includegraphics[scale=0.4]{compounding_PCA.jpg}\\
 In this case no negative interest rates occur.
 
@@ -229,7 +229,7 @@ Uncertain volatility model assumes volatility to be not just random, but uncerta
 
 So the task basically consist of two major parts. First is to solve non-linear bond pricing equation (as described above) and the second is to solve optimization problem. The goal of the second part is to find combination of our option being priced with other traded instruments, which (combination) will have least residual cost. 
 
-Optimization doesn't make sense for linear pricing models, because in linear pack of options cost is exactly the same as the sum of their prices. That's not the case for non-linear models. One can create a pack, which will contain some non-traded exotic option and number of traded vanilla options. Then he or she will try to solve optimization problem: $[\lambda_1, ..., \lambda_N] = \underset{[\lambda_1, ..., \lambda_N]\in \mathbf{R}^N}{\arg \min} \left[\text{Price}\left(\text{Exotic} + \sum_{i=1}^{N}\lambda_i \text{Vanilla}_i\right) - \sum_{i=1}^N\lambda_i\text{Price}\left(\text{Vanilla}_i\right) \right]$.
+Optimization doesn't make sense for linear pricing models, because in linear pack of options cost is exactly the same as the sum of their prices. That's not the case for non-linear models. One can create a pack, which will contain some non-traded exotic option and number of traded vanilla options. Then he or she will try to solve optimization problem:\\ $[\lambda_1, ..., \lambda_N] = \underset{[\lambda_1, ..., \lambda_N]\in \mathbf{R}^N}{\arg \min} \left[\text{Price}\left(\text{Exotic} + \sum_{i=1}^{N}\lambda_i \text{Vanilla}_i\right) - \sum_{i=1}^N\lambda_i\text{Price}\left(\text{Vanilla}_i\right) \right]$.
 
 Application of static hedge allows to narrow bid-ask spread on exotic product, which price is calculated using uncertain parameters model.
 
@@ -247,28 +247,25 @@ This means that in the first part of this task we have to develop an FDM which s
 
 Finite difference methods approach suggest substitution of partial derivatives with their approximation with finite differences. The problem that arises is accuracy of such approximation and convergence of a numerical method.
 
-First off, let's introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_k = k\delta t, k = 0...N_t-1, \delta t = T/N_t\rbrace$. $N_t$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_S = \lbrace S_i = i\delta s, i = 0...N_s-1, \delta s = S_{max}/N_s\rbrace$.\\
-
-Later on I will denote time step $\delta t$ as $\tau$ and asset price step $\delta s$ as $h$.
+First off, let's introduce grids on time and asset price axes. If time $t \in [0,T]$, then grid $\omega_t$ is $\omega_t = \lbrace t_k =\frac{k}{\tau}, k = 0...N_t, \delta t = \frac{T}{K+1}\rbrace$. $K$ is arbitrary chosen number of points on time axis. Similarly, asset price grid is $\omega_s = \lbrace S_i = \frac{i}{h}, i = 0...N, h = \frac{S_{max}}{N+1}\rbrace$.\\
 
 I will use the following symbols for difference operations:
 \begin{itemize}
-	\item Right first-order derivative: $V_x =\frac{V_{i+1}-V_i}{h}$
-	\item Left first-order derivative: $V_{\overline{x}} =\frac{V_{i}-V_{i-1}}{h}$
-	\item Central first-order derivative: $V_{\mathring{x}} =\frac{V_{i+1}-V_{i-1}}{2h}$
-	\item Second order derivative $V_{x\overline{x}} = \left(\frac{V_{i+1}-V_i}{h} - \frac{V_{i}-V_{i-1}}{h}\right)/h = \frac{V_{i+1}-2V_{i}+V_{i-1}}{h^2}$
+	\item Right first-order derivative: $V_s =\frac{V_{i+1}-V_i}{h} = V'(s) + O(h)$
+	\item Left first-order derivative: $V_{\overline{s}} =\frac{V_{i}-V_{i-1}}{h} = V'(s) + O(h)$
+	\item Central first-order derivative: $V_{\mathring{s}} =\frac{V_{i+1}-V_{i-1}}{2h} = V'(s) + O(h^2)$
+	\item Second order derivative $V_{s\overline{s}} = \frac{1}{h}\left(\frac{V_{i+1}-V_i}{h} - \frac{V_{i}-V_{i-1}}{h}\right) = \frac{V_{i+1}-2V_{i}+V_{i-1}}{h^2} = V''(s) + O(h^2)$
 \end{itemize}
 
 Finite difference approximation of BS equation at point $i$ is the following:
 \begin{equation}
-V_t + \sigma^2 S_i^2 V_{\overline{x}x} + r S_i V_{\mathring{x}} + rV_i = 0
+V_t + \sigma^2 S_i^2 V_{\overline{s}s} + r S_i V_{\mathring{s}} + rV_i = 0
 \end{equation}
 
 This scheme has second order of accuracy w.r.t $s$ and first order w.r.t $t$, or $O(\delta t, \delta s^2)$.
 
 % Я построил две разностные схемы - для явного и неявного метода.
-If last three terms of previous equation are taken at time step $k$, the scheme is explicit, and when $k+1$ is used, the scheme is implicit. These schemes are plotted on the figure below.
-
+If last three terms of previous equation are taken at time step $k$, the scheme is explicit, and when $k+1$ is used, the scheme is implicit. These schemes are plotted on the figure below.\\
 \includegraphics[scale=0.5]{schemes.png}\\ 
 
 \subsubsection{Boundary conditions}
@@ -284,18 +281,64 @@ $2V_1 - V_2 = 2V_0 + 2h V_0' + h^2 V_0'' - V_0 - 2h V_0' - 2h^2V_0'' + O(h^3) = 
 
 Moreover, such approximation is very convenient when it comes to pricing of a pack of the options. 
 
-\item[Payoff condition ($s \to +\infty, \forall t$)]. In this case everything told about lower boundary condition is still correct, and thus, similar condition can be used. In this case it would look like $V_N = 2V_{N-1} - V_{N-2}$. The only thing to mention is that we are, of course, unable to stretch the grid up to positive infinity and hence we will have to use some large value of asset price instead. In literature it is told that $S_{max} = 2 \cdot \text{Strike}$ would be enough.  %С учетом вышеизложенного, наверху применяется аналогичная схема. При этом бесконечностью считается удвоенная текущая стоимость актива (хорошо ли это?)
+\item[Maximum asset price ($s \to +\infty, \forall t$)]. In this case everything told about lower boundary condition is still correct, and thus, similar condition can be used, which would look like $V_N = 2V_{N-1} - V_{N-2}$. The only thing to mention is that we are, of course, unable to stretch the grid up to positive infinity and hence we will have to use some large value of asset price instead. In literature it is told that $S_{max} = 2 \cdot \text{Strike}$ would be enough.  %С учетом вышеизложенного, наверху применяется аналогичная схема. При этом бесконечностью считается удвоенная текущая стоимость актива (хорошо ли это?)
 \end{description}
 
 \subsubsection{Scheme formulas}
+In case of explicit scheme FDM formula writes as follows:\\
+$\frac{V_i^{k+1}-V_i^k}{\tau} + \frac{1}{2}\sigma^2 S_i^2 \frac{V_{i+1}^{k+1}-2V_{i}^{k+1}+V_{i-1}^{k+1}}{h^2} + r S_i \frac{V_{i+1}^{k+1}-V_{i-1}^{k+1}}{2h}-r V_{i}^{k+1}= 0$, or \\
+$V_{i}^{k+1} + \frac{1}{2} \sigma^2 S_i^2 \frac{\tau}{h^2}\left(V_{i+1}^{k+1}-2V_{i}^{k+1}+V_{i-1}^{k+1}\right) + r S_i \frac{\tau}{2h}\left(V_{i+1}^{k+1}-V_{i-1}^{k+1}\right)-r \tau V_{i}^{k+1} = V_{i}^{k}$.\\
 
+
+Denoting $a_i = \frac{1}{2} \sigma^2 S_i^2 \frac{\tau}{h^2}$, $b_i = r S_i \frac{\tau}{2h}$ and $c_i = -r \tau$, obtain:\\
+$V_{i}^{k+1} +a_i \left(V_{i+1}^{k+1}-2V_{i}^{k+1}+V_{i-1}^{k+1}\right) + b_i \left(V_{i+1}^{k+1}-V_{i-1}^{k+1}\right)-c_i V_{i}^{k+1} = V_{i}^{k}$\\
+
+
+We can also remember that $S_i = ih$ and hence $\frac{S_i}{h} = i$ and formulas for coefficients become: $a_i = \frac{1}{2} \sigma^2 i^2 \tau$, $b_i = \frac{1}{2} r i \tau $ and $c_i = -r \tau$.\\
+
+Now, gathering coefficients at different $V_i^k$ we have:\\
+$(a_i - b_i)V_{i+1}^{k+1} + (1-2a_i+c_i)V_{i}^{k+1}+(a_i + b_i)V_{i-1}^{k+1}=V_{i}^{k}$.\\
+
+Denoting $A_i = a_i + b_i$, $B_i = 1-2a_i + c_i$ and $C_i = a_i+b_i$ we have:\\
+\begin{equation}\label{eq:FDM_explicit}
+A_i V_{i+1}^{k+1} + B_i V_{i}^{k+1}+C_iV_{i-1}^{k+1}=V_{i}^{k}
+\end{equation}
+
+This means I can obtain $V^k = [V_1^k, V_2^k, ..., V_N^k]^T$ - vector of function value on layer $k$, from equation $V^k = Z V^{k+1}$, where $Z$ is a tridiagonal matrix with $A$, $B$ and $C$ coefficients above, on, and below main diagonal accordingly. In order to obtain completed form of this matrix $Z$ we have to consider boundary conditions.
+
+Lower boundary condition writes as $V_0 = 2V_1 - V_2$. This means that when $i=1$, equation \ref{eq:FDM_explicit} becomes $A_1 V_{2}^{k+1} + B_1 V_{1}^{k+1}+C_1 V_{0}^{k+1}=V_{1}^{k}$, or $A_1 V_{2}^{k+1} + B_1 V_{1}^{k+1}+C_1 (2V_1^{k+1} - V_2^{k+1})=V_{1}^{k}$. This is equivalent to:\\
+\begin{equation}
+V_{1}^{k+1} \left(B_1 + 2C_1 \right)+ V_{2}^{k+1} \left( A_1 - C_1 \right)=V_{1}^{k}
+\end{equation}
+
+Similarly, upper boundary condition is now:
+\begin{equation}
+V_{N-2}^{k+1} \left(A_{N-1} - C_{N-1} \right)+ V_{N-1}^{k+1} \left( B_{N-1} + 2C_{N-1} \right)=V_{N-1}^{k}
+\end{equation}
+
+And the matrix $Z$ is now:
+
+
+\begin{equation}
+Z = 
+\begin{pmatrix}
+B_1 + 2C_1		& 	A_1 - C_1 	& 	  		& 		 	& 		 				& 						\\
+A_2 			& 	B_2 		& 	 C_2	& 		 	& 		 				& 					 	\\
+	 			& 	A_3			& 	 B_3 	& C_3	 	& 		 				& 						\\
+ 				& 		 		& \ddots 	& \ddots 	& 	\ddots 				& 	 					\\
+ 				& 		 		& 		 	& A_{N-2} 	& 	B_{N-2}				& 	C_{N-2}				\\
+ 				& 		 		& 		 	& 		 	& 	A_{N-1} - C_{N-1}	& 	B_{N-1} + 2C_{N-1} 	
+\end{pmatrix}
+\end{equation} 
+
+Note that this matrix is $(N-1) \times (N-1)$, while the grid has $N+1$ points by $S$ axis. This is because values in top and bottom row are to be calculated from boundary conditions.
 \subsubsection{Non-linear gamma case}
 
 \subsection{Finite-difference method for pack of options}
 % Тут надо решить две задачи. Первое - корректно нанести все на единую сетку
 
 \subsection{Stability and convergence condition}
-In \cite[ch. ????]{PWoQF06} it has been shown that in order for explicit scheme to converge, it is necessary that the following condition was held: $\tau \leq \frac{h^2}{\sigma^2}$. The implicit scheme is unconditionally convergent. 
+In \cite[ch. ????]{PWoQF06} it has been shown that in order for explicit scheme to converge, it is necessary that the following condition was held: $\tau \leq \frac{1}{N^2\sigma^2}$. The implicit scheme is unconditionally convergent. 
 
 There are interesting analogy between explicit scheme and trinomial tree model in \cite[ch. ???]{Hull03}. Since value at particular point on next time step is calculated as a weighted average of values of three sibling points on previous time step, the weight could be considered to be the probabilities of up, down and straight asset price movements. This argument gives two interesting consequences: first, it seems to be rightful to require these probabilities to be non-negative and add up to one. And solving three equations (TODO) we immediately obtain the same stability condition (TODO)! 
 
