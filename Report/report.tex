@@ -20,9 +20,6 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 
-
-%%\usepackage{dsfont}
-
 %%% HEADERS & FOOTERS
 \usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
 \pagestyle{fancy} % options: empty , plain , fancy
@@ -168,25 +165,25 @@ MICEX data are a bit more contrived. The data consists of a list of daily parame
 
 Choice between data sources depends on SELECTED\_MODEL variable. It can take two values, BANK\_ENGLAND\_FWD and MICEX\_NSS.
 
-\subsubsection{Discretisation}
-In order to simulate equation \eqref{eq:hjm_musiela_multidim}, we have to replace it with its discrete version. First I will discretize it by $t$. Time $t$ starts at zero and has step of arbitrary fixed length $\delta t$.
+\subsubsection{Sampling}
+In order to simulate equation \eqref{eq:hjm_musiela_multidim}, we have to replace it with its discrete version. Let's start from $t$ dimension. Time $t$ starts at zero and has step of arbitrary fixed length $\delta t$.
 \begin{equation}
 \bar{f}_i(\tau) - \bar{f}_{i-1}(\tau) = \left[\sum_{k=1}^N\bar{\nu_k}(\tau)\int_{0}^{\tau}\bar{\nu_k}(s)ds+ \frac{\partial}{\partial \tau}\bar{f}_{i-1}(\tau)\right]\delta t + \sum_{k=1}^N\bar{\nu_k}(\tau)\delta W_{k}
 \end{equation}
-Here $N$ is number of principal components, and $i$ ranges from $1$ to artbitrary chosen period of time.
+Here $N$ is number of principal components, and $i$ ranges from $1$ to arbitrary chosen period of time.
 
-Next step is discretisation by terms $\tau$. In my case it is either done exogenously (Bank of England data are already discretised by the Bank by terms) or I could do it myself. This means I have a system of $M$ equations, there $M$ is number of points on term grid.
+Next step is terms dimension $\tau$. In my case I either already have data taken at discrete points (Bank of England data are presented as rates for certain terms) or I could take some continuous data and retrieve samples at specific terms. This means I have a system of $M$ equations, there $M$ is number of points on term grid.
 \begin{equation} \label{eq:hjm_musiela_multidim_discrete}
 \bar{f}_i^j - \bar{f}_{i-1}^j = \left[\sum_{k=1}^N\bar{\nu_k}(\tau_j)\int_{0}^{\tau_j}\bar{\nu_k}(s)ds+ \frac{\bar{f}_{i-1}^j-\bar{f}_{i-1}^{j-1}}{\delta\tau_j}\right]\delta t + \sum_{k=1}^N\bar{\nu_k}(\tau_j)\delta W_{k}
 \end{equation}
 where $j = \overline{1:M}$ and $\delta\tau_j = \tau_j - \tau_{j-1}$ is a length of $j^{th}$ term grid step. 
 
-The only undiscretised thing here is integral $\int_{0}^{\tau_j}\bar{\nu_k}(s)ds$. $\bar{\nu}(\tau)$ is a function with known values on grid points. Hence we can easily do a numerical integration using, for example, standard trapezoid rule:
+The only thing we have to estimate here is integral $\int_{0}^{\tau_j}\bar{\nu_k}(s)ds$. $\bar{\nu}(\tau)$, which is a function with known values on grid points. Hence we can easily do a numerical integration using, for example, standard trapezoid rule:
 \begin{equation}
 \int_{0}^{\tau_j}\bar{\nu_k}(s)ds = \sum_{i=1}^{j-1}\frac{\bar{\nu_k(\tau_i)}+\bar{\nu_k(\tau_{i+1})}}{2}\delta\tau_i
 \end{equation}
 
-Another approach is to use approximated principal components. In this case integration is performed as described in appendix~\ref{ap:Polynom}
+Another approach is to use approximated principal components. In this case integration is performed as described in appendix~\ref{ap:Polynom}.
 
 \subsubsection{Few more words on volatility}
 The last issue I wanted to discuss is volatility structure. In \cite[par. 37.15]{PWoQF06} it is told that standard HJM model might give negative interest rates. That was exactly what I have gotten, and it was a bit irritating. 
@@ -205,10 +202,35 @@ I tried both approximated and raw vectors and I must say that I found no signifi
 \subsection{Pricing financial instruments}
 
 \subsubsection{Zero-coupon bond}
+In order to price a zero-coupon bond we need to use equation \ref{eq:truebondprice}, namely
+
+\[Z(0,T) = \exp\left(-\int_{0}^{T}{f(s)ds}\right)\]
+where $f(s)$ is an instantaneous forward rate at time $s$. In terms of the model, instantaneous forward rate at time $s$ is $\bar{f}_i^0$ where $i = \frac{s}{\delta t}$. This means that integral in question can be written as $\int_{0}^{T}{f(s)ds} = \sum_{i=0}^N \bar{f}_i^0 \delta t = \delta t \sum_{i=0}^N \bar{f}_i^0$. This allows us to calculate bond price for one simulation.\\ In case of $M$ simulations the final bond pricing formula becomes: \\
+\begin{equation}
+Z(0,T) = \frac{1}{M}\sum_{k=1}^{M}\exp\left(-\delta t \sum_{i=0}^N \bar{f}_{i,k}^0\right)
+\end{equation}
 
 \subsubsection{Cap pricing}
+Zero coupon bond price is a discount factor, which can be used when pricing more complex derivatives. Hence, bond pricing formula can be easily aggregated to price any contingent claim with payoff $V_T$
+\begin{equation}
+V_0 = \frac{1}{M}\sum_{k=1}^{M}\left[\exp\left(-\delta t \sum_{i=0}^N \bar{f}_{i,k}^0\right)V_T\right]
+\end{equation}
+Cap payoff is $(Y_t^\tau - R)^+$, where $Y_t^\tau$ is a spot rate at time $t$ with term $\tau$. If $t = t_i$ and $\tau = t_n$, then 
+\begin{equation}
+Y_{t_i}^{t_n} = \frac{\exp\left(\delta t\sum_{k=0}^{n-1}\bar{f}_{i,k}^0\right)-1}{n \delta t}
+\end{equation}
 
-\subsection{Other models}
+%Cap is a set of caplets, and each of them is an option on future interest rate of given term. Hence, price of a cap is an expected price of sum of caplet prices. In case that there are $M$ simulations and each cap consists of $K$ caplets, its price is:
+%\begin{equation}
+%C = \frac{1}{M}\sum_{k=1}^{M}\left(\sum_{i=0}^K \text{Price}_{\text{Caplet, i}}\right)
+%\end{equation}
+%Price of a caplet is equal to its discounted payoff. Let's suppose that all caplets have same strike rate R, and $i$th caplet has term $t_i$ then caplet price is:
+%\begin{equation}
+%\text{Price}_{\text{Caplet,i}} = \frac{(r_{t_i} - R)^+}{1+r_{t_i}}
+%\end{equation}
+
+
+%\subsection{Other models}
 %В данном задании меня очень беспокоил вопрос валидации результатов моделирования. Наиболее просто было бы сравнить мои результаты с результатами работы аналогичной модели, но уже разработанной и проверенной. К сожалению, я не нашел доступной реализации именно такой версии HJM. Такая реализация есть в Матлабе, но у меня, к сожалению, нет доступа к пакету Financial Derivatives.
 
 %Поэтому я попытался найти модель другого типа, которая обладала бы схожими свойствами. Наша версия HJM обладает следующими свойствами: во-первых, мы калибруем ее на историю (причем с учетом корреляционной структуры волатильности исторических ставок), и, во-вторых, она моделирует динамику всей кривой доходности. LMM - очевидный конкурент, но, аналогично, простой и внятной, проверенной и бесплатной версии я не нашел.
@@ -219,8 +241,7 @@ I tried both approximated and raw vectors and I must say that I found no signifi
 
 %После того, как я понял, как применять самые простые модели, стало понятно, что оценка стоимости деривавтивов, которую они дадут, не будет сравнима с результатами работы HJM.
 
-\subsection{Further improvements}
-
+%\subsection{Further improvements}
 
 %% ---> STATIC HEDGE <--- %%
 \section{Uncertain volatility and static hedge}
@@ -332,22 +353,55 @@ A_2 			& 	B_2 		& 	 C_2	& 		 	& 		 				& 					 	\\
 \end{equation} 
 
 Note that this matrix is $(N-1) \times (N-1)$, while the grid has $N+1$ points by $S$ axis. This is because values in top and bottom row are to be calculated from boundary conditions.
+
+In implicit scheme equation is:\\
+$\frac{V_i^{k+1}-V_i^k}{\tau} + \frac{1}{2}\sigma^2 S_i^2 \frac{V_{i+1}^{k}-2V_{i}^{k}+V_{i-1}^{k}}{h^2} + r S_i \frac{V_{i+1}^{k}-V_{i-1}^{k}}{2h}-r V_{i}^{k}= 0$, or after similar simplifications:\\
+\begin{equation}\label{eq:FDM_implicit}
+A_i V_{i+1}^{k} + B_i V_{i}^{k}+C_iV_{i-1}^{k}=V_{i}^{k+1}
+\end{equation}
+where $A_i = -(a_i + b_i)$, $B_i = 1+2a_i - c_i$ and $C_i = -a_i+b_i$ 
+
 \subsubsection{Non-linear gamma case}
+In this case we have to substitute simple $\sigma$ by $\sigma(\Gamma) = \begin{cases}\sigma_{min}, \Gamma < 0\\\sigma_{max}, \Gamma \geq 0\end{cases}$. During the computations it is done according to the following algorithm:
+\begin{enumerate}
+	\item Before FDM calculation cycle
+	\begin{itemize}
+		\item Calculate $Z_{min}$ and $Z_{max}$ matrices using $\sigma_{min}$ and $\sigma_{max}$ respectively, according to description above.
+	\end{itemize}
+	\item In FDM calculation cycle
+	\begin{itemize}
+		\item In the calculation cycle.
+		\item Calculate $\Gamma$ at current time step. We use option payoff as a starting point.
+		\item Take $Z = Z_{max}$. Replace rows of $Z$ to those of $Z_{min}$, where $\Gamma$ is negative. In Matlab code it looks as $Z(\Gamma < 0, :) = Z_{min}(\Gamma<0,:)$. This, in essence, replaces equations with maximum $\Gamma$ to those with minimum.
+	\end{itemize}
+\end{enumerate}
+
 
 \subsection{Finite-difference method for pack of options}
 % Тут надо решить две задачи. Первое - корректно нанести все на единую сетку
 
 \subsection{Stability and convergence condition}
-In \cite[ch. ????]{PWoQF06} it has been shown that in order for explicit scheme to converge, it is necessary that the following condition was held: $\tau \leq \frac{1}{N^2\sigma^2}$. The implicit scheme is unconditionally convergent. 
+In \cite[ch. ????]{PWoQF06} it has been shown that in order for explicit scheme to converge, it is necessary that the following condition was held: $\tau \leq \frac{1}{\sigma^2 N^2}$. The implicit scheme is unconditionally convergent. 
 
-There are interesting analogy between explicit scheme and trinomial tree model in \cite[ch. ???]{Hull03}. Since value at particular point on next time step is calculated as a weighted average of values of three sibling points on previous time step, the weight could be considered to be the probabilities of up, down and straight asset price movements. This argument gives two interesting consequences: first, it seems to be rightful to require these probabilities to be non-negative and add up to one. And solving three equations (TODO) we immediately obtain the same stability condition (TODO)! 
+There are interesting analogy between explicit scheme and trinomial tree model in \cite[ch. ???]{Hull03}. Since value at particular point on next time step is calculated as a weighted average of values of three sibling points on previous time step, the weight could be considered to be the probabilities of up, down and straight asset price movements. This argument gives two interesting consequences: first, it seems to be rightful to require these probabilities to be non-negative and add up to one. Or, more precisely, to discounted one, because on each time step of the tree discounting takes place. It is easy to see that it is right: $A_i + B_i + C_i = (a_i+b_i) + (1-2a_i+c_i) +(a_i-b_i) = 1 + c_i = 1 - r\tau$. And the non-negativity condition yields:
+\[
+\left\{
+\begin{array}{l l l}
+    a_i + b_i > 0\\
+    1-2a_i+c_i > 0\\
+    a_i-b_i > 0
+  \end{array}
+\right.
+\]
 
-Another interesting consequence is that it is not really necessary\footnote{While it is not really necessary indeed, I still did the calculations on the whole grid. First, we do FDM here, not the tree. And second thing was that I wanted to see whole price surface, not the value in a single point} to do the calculations in each and every point of the grid! It would be enough to calculate along the trinomial tree (cone), that converges to the point with coordinates $(S_0, 0)$, i.e. the one that gives the value of the option at time zero and at asset price equal to current spot.
+The second equation yields $\sigma^2 i^2 \tau + r \tau - 1<0$ or $\tau(\sigma^2 i^2 + r) < 1$, and hence $\tau < \frac{1}{\sigma^2 N^2}$, which is stability condition.
+
+Another interesting consequence of trinomial tree analogy is that it is not really necessary\footnote{While it is not really necessary indeed, I still did the calculations on the whole grid. First, we do FDM here, not the tree. And second thing was that I wanted to see whole price surface, not the value in a single point} to do the calculations in each and every point of the grid! It would be enough to calculate along the trinomial tree (cone), that converges to the point with coordinates $(S_0, 0)$, i.e. the one that gives the value of the option at time zero and at asset price equal to current spot.
 
 \includegraphics[scale=0.5]{convergent-tree.png}\\
 In the figure above circled points are those where calculations are not necessary. Number of points on time axis is enough for scheme to converge to option value at current strike. 
 
-And, finally, this gives another great interpretation and justification of stability condition for explicit scheme: time step must be small enough to ensure that there fits a convergent cone into our grid. As an example here's a figure below where there's too few points on time axis for scheme to converge.
+And, finally, this gives another great interpretation and justification of stability condition for explicit scheme: time step must be small enough to ensure that there convergent cone could fit into the grid. As an example here's a figure below where there's too few points on time axis for scheme to converge.
 
 \includegraphics[scale=0.5]{non-convergent-tree.png}\\
 
@@ -440,7 +494,7 @@ J(\theta) = \frac{1}{N+1}\sum_{k=0}^{N}\left(y_k-f(\theta,x_k)\right)^2 \to max
 \end{equation} where $f(\theta_N,x) =  \sum_{k=0}^N \theta_k x^k$.
 Using vector notation. we can rewire it as follows:
 \begin{equation}
-\theta = argmax\left[J(\theta) = \left(\mathbf{y}-\mathbf{\theta \cdot x}\right)^T\left(\mathbf{y}-\mathbf{\theta \cdot x}\right)\right]
+\theta = \text{argmax}\left[J(\theta) = \left(\mathbf{y}-\mathbf{\theta \cdot x}\right)^T\left(\mathbf{y}-\mathbf{\theta \cdot x}\right)\right]
 \end{equation} 
 Here $y = (y_1, ..., y_N)^T$, $\theta = (\theta_1,...\theta_M)$ and 
 

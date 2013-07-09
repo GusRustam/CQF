@@ -6,7 +6,7 @@ close all;
 %% Setting up constants
 Q = 12;                 % number of compoundings per year for non-infinitesimal model
 N = 3;                  % number of principal components
-M = 10;                 % number of simulations
+NUM_ITER = 100;                 % number of simulations
 D = 252;                % days in year
 T = 5*D;                % number of days to simulate
 dT = 1/D;               % time step for simulation
@@ -14,7 +14,7 @@ s_dT = sqrt(dT);
 
 MICEX_NSS = 1;
 BANK_ENGLAND_FWD = 2;
-SELECTED_MODEL = BANK_ENGLAND_FWD;
+SELECTED_MODEL = MICEX_NSS;
 
 LOGNORMAL = 1;          % 0 - standard model, 1 - non-infinitesimal
 APPROXIMATE = 0;        % 0 - no principal components approximation, 1 - polynomial approximation
@@ -123,20 +123,20 @@ F0 = rates(index, :)/100;   % initial rate curve
 
 % Defining Zero-Coupon Bond
 ZCB.Term = 5;
-ZCB.Data = zeros(1,M); % a zero-coupon bond with maturity of 5 years
+ZCB.Data = zeros(1,NUM_ITER); % a zero-coupon bond with maturity of 5 years
 
 % Defininig Cap
 Cap.Term = 4;
 Cap.Rate = (2/3)*mean(mean(rates))/100;
-Cap.Period = 1/4;
-Cap.Caplets = zeros(M, Cap.Term/Cap.Period);
+Cap.Period = 1/D;
+Cap.Caplets = zeros(NUM_ITER, Cap.Term/Cap.Period);
 Cap.Periods = floor(cumsum(ones(1,Cap.Term/Cap.Period)*Cap.Period)*D);
 Cap.NumPmts = Cap.Term/Cap.Period;
 
 tic
 dt = [d_terms d_terms(end)];
 
-for time=1:M
+for time=1:NUM_ITER
     M = size(terms, 2);
     f = zeros(T, M);
     f(1,:) = F0;

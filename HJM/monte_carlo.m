@@ -6,7 +6,7 @@ close all;
 %% Setting up constants
 Q = 12;                 % number of compoundings per year for non-infinitesimal model
 N = 3;                  % number of principal components
-NUM_ITER = 10000;       % number of simulations
+NUM_ITER = 100;       % number of simulations
 D = 252;                % days in year
 T = 10*D;               % number of days to simulate
 dT = 1/D;               % time step for simulation
